@@ -1,5 +1,6 @@
 package com.sirhadrian.musicplayer.ui;
 
+import android.content.Intent;
 import android.os.Bundle;
 import android.view.LayoutInflater;
 import android.view.View;
@@ -10,6 +11,7 @@ import android.widget.Toast;
 import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
 import androidx.fragment.app.Fragment;
+import androidx.fragment.app.FragmentManager;
 import androidx.recyclerview.widget.LinearLayoutManager;
 import androidx.recyclerview.widget.RecyclerView;
 
@@ -18,6 +20,7 @@ import com.sirhadrian.musicplayer.databinding.FragmentSongsListBinding;
 
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Objects;
 
 public class SongsListFragment extends Fragment {
     private List<String> tempSongs;
@@ -35,12 +38,12 @@ public class SongsListFragment extends Fragment {
 
         View view = binding.getRoot();
 
-        mRecyclerView=binding.fragmentSongsListRecyclerView;
+        mRecyclerView = binding.fragmentSongsListRecyclerView;
         mRecyclerView.setLayoutManager(new LinearLayoutManager(getContext()));
 
         tempSongs = new ArrayList<>();
         for (int i = 0; i < 30; ++i) {
-            tempSongs.add("Song number #"+ (i+1));
+            tempSongs.add("Song number #" + (i + 1));
         }
 
         if (mSongsAdapter == null) {
@@ -94,8 +97,17 @@ public class SongsListFragment extends Fragment {
             @Override
             public void onClick(View view) {
                 Toast.makeText(getContext(),
-                        get_mSongTitle().getText().toString() + " Clicked!", Toast.LENGTH_SHORT)
+                                get_mSongTitle().getText().toString() + " Clicked!", Toast.LENGTH_SHORT)
                         .show();
+
+                FragmentManager fragmentManager = getActivity().getSupportFragmentManager();
+                Fragment fragment = new SongDetailFragment();
+
+                fragmentManager.beginTransaction()
+                        .setReorderingAllowed(true)
+                        .replace(R.id.fragment_holder, fragment)
+                        .commit();
+
             }
         }
     }
