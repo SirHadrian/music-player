@@ -3,4 +3,5 @@
     <string name="page_title">Music Player</string>
     <string name="search">Search</string>
     <string name="more">Settings</string>
+    <string name="scan">Scan</string>
 </resources>

@@ -1,9 +1,11 @@
 package com.sirhadrian.musicplayer;
 
 import androidx.appcompat.app.AppCompatActivity;
+import androidx.core.app.ActivityCompat;
 import androidx.fragment.app.Fragment;
 import androidx.fragment.app.FragmentManager;
 
+import android.Manifest;
 import android.os.Bundle;
 import android.view.View;
 

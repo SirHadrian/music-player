@@ -11,8 +11,13 @@
         app:showAsAction="ifRoom" />
 
     <item
-        android:id="@+id/more"
+        android:id="@+id/settings"
         android:title="@string/more"
+        app:showAsAction="never" />
+
+    <item
+        android:id="@+id/scan"
+        android:title="@string/scan"
         app:showAsAction="never" />
 
 </menu>
