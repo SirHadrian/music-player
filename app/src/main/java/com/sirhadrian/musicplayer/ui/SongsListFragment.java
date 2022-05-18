@@ -15,6 +15,7 @@ import androidx.fragment.app.Fragment;
 import androidx.lifecycle.ViewModelProvider;
 import androidx.recyclerview.widget.LinearLayoutManager;
 import androidx.recyclerview.widget.RecyclerView;
+import androidx.viewpager2.widget.ViewPager2;
 
 import com.sirhadrian.musicplayer.R;
 import com.sirhadrian.musicplayer.databinding.FragmentSongsListBinding;
@@ -30,9 +31,11 @@ public class SongsListFragment extends Fragment {
     private SharedDataViewModel mSharedData;
     private RecyclerView mRecyclerView;
     private SongsAdapter mSongsAdapter;
+    private ViewPager2 viewPager2Activity;
 
 
-    public SongsListFragment() {
+    public SongsListFragment(ViewPager2 viewPager) {
+        this.viewPager2Activity = viewPager;
     }
 
     @Nullable
@@ -130,6 +133,9 @@ public class SongsListFragment extends Fragment {
             }
 
             public SongModel get_mSongModel() {
+                if (mSongModel == null) {
+                    mSongModel = new SongModel();
+                }
                 return mSongModel;
             }
 
@@ -143,6 +149,8 @@ public class SongsListFragment extends Fragment {
                         Toast.LENGTH_SHORT).show();
 
                 mSharedData.select(get_mSongModel());
+
+                viewPager2Activity.setCurrentItem(viewPager2Activity.getCurrentItem() + 1);
             }
         }
     }

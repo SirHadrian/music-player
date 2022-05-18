@@ -4,6 +4,10 @@ public class SongModel {
 
     private String mSongTitle, mSongUri;
 
+    public SongModel() {
+
+    }
+
     public SongModel(String songTitle, String songURI) {
         this.mSongTitle=songTitle;
         this.mSongUri = songURI;

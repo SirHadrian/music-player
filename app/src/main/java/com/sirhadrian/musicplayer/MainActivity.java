@@ -34,7 +34,7 @@ public class MainActivity extends AppCompatActivity {
 
         mViewPagerFragments = new ArrayList<>();
 
-        Fragment songsListFragment = new SongsListFragment();
+        Fragment songsListFragment = new SongsListFragment(mFragmentViewPager);
         Fragment songDetailFragment = new SongDetailFragment();
 
         mViewPagerFragments.add(songsListFragment);
