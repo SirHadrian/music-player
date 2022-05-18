@@ -1,10 +1,6 @@
 package com.sirhadrian.musicplayer.ui;
 
-import android.content.Context;
-import android.database.Cursor;
-import android.net.Uri;
 import android.os.Bundle;
-import android.provider.MediaStore;
 import android.util.Log;
 import android.view.LayoutInflater;
 import android.view.View;
@@ -22,21 +18,22 @@ import androidx.recyclerview.widget.RecyclerView;
 
 import com.sirhadrian.musicplayer.R;
 import com.sirhadrian.musicplayer.databinding.FragmentSongsListBinding;
-import com.sirhadrian.musicplayer.model.AudioModel;
 
 import java.io.File;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
-import java.util.concurrent.Executor;
-import java.util.concurrent.Executors;
 
 public class SongsListFragment extends Fragment {
+
     private List<HashMap<String, String>> mSongsList;
 
     private RecyclerView mRecyclerView;
     private SongsAdapter mSongsAdapter;
 
+
+    public SongsListFragment() {
+    }
 
     @Nullable
     @Override
@@ -59,10 +56,9 @@ public class SongsListFragment extends Fragment {
 
                         case R.id.scan:
                             String myFolderTemp = "/storage/44A6-B704/Documents/Music/E_B_M";
-                            mSongsList = getPlayList(myFolderTemp);
+                            mSongsList = this.getPlayList(myFolderTemp);
 
                             if (mSongsList != null) {
-
                                 mSongsAdapter = new SongsAdapter(mSongsList);
                                 mRecyclerView.setAdapter(mSongsAdapter);
                             }
@@ -91,9 +87,10 @@ public class SongsListFragment extends Fragment {
         return view;
     }
 
+
     private class SongsAdapter extends RecyclerView.Adapter<SongsAdapter.SongHolder> {
 
-        private List<HashMap<String, String>> mSongsTitles;
+        private final List<HashMap<String, String>> mSongsTitles;
 
         public SongsAdapter(List<HashMap<String, String>> songs) {
             this.mSongsTitles = songs;
@@ -133,10 +130,6 @@ public class SongsListFragment extends Fragment {
                 return mSongTitle;
             }
 
-            public String get_mSongPath() {
-                return mSongPath;
-            }
-
             public void set_mSongPath(String mSongPath) {
                 this.mSongPath = mSongPath;
             }
@@ -145,23 +138,10 @@ public class SongsListFragment extends Fragment {
             public void onClick(View view) {
                 Toast.makeText(getContext(), get_mSongTitle().getText().toString() + " Clicked!",
                         Toast.LENGTH_SHORT).show();
-
-                FragmentManager fragmentManager = getActivity().getSupportFragmentManager();
-                Fragment fragment = new SongDetailFragment();
-
-                Bundle bundle = new Bundle();
-                bundle.putString("path", mSongPath);
-                bundle.putString("name", mSongTitle.getText().toString());
-                fragment.setArguments(bundle);
-
-                fragmentManager.beginTransaction()
-                        .setReorderingAllowed(true)
-                        .replace(R.id.fragment_holder, fragment)
-                        .commit();
-
             }
         }
     }
+
 
     ArrayList<HashMap<String, String>> getPlayList(String rootPath) {
         ArrayList<HashMap<String, String>> fileList = new ArrayList<>();
@@ -169,6 +149,7 @@ public class SongsListFragment extends Fragment {
         try {
             File rootFolder = new File(rootPath);
             File[] files = rootFolder.listFiles();
+            assert files != null;
             for (File file : files) {
                 if (file.isDirectory()) {
                     if (getPlayList(file.getAbsolutePath()) != null) {

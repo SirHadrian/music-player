@@ -23,9 +23,6 @@ import java.io.IOException;
 
 public class SongDetailFragment extends Fragment {
 
-    private TextView mSongDetailTitle;
-    MediaPlayer mediaPlayer;
-
     public SongDetailFragment() {
 
     }
@@ -40,34 +37,7 @@ public class SongDetailFragment extends Fragment {
 
         View view = binding.getRoot();
 
-        mSongDetailTitle = binding.songDetailTextView;
-
-        FragmentManager fragmentManager = getActivity().getSupportFragmentManager();
-        Fragment fragment = fragmentManager.findFragmentById(R.id.fragment_holder);
-
-        assert fragment != null;
-        assert fragment.getArguments() != null;
-        mSongDetailTitle.setText(fragment.getArguments().getString("name"));
-
-        Uri uri = Uri.fromFile(new File(fragment.getArguments().getString("path")));
-
-        Log.d("uri", fragment.getArguments().getString("path"));
-
-
-        mediaPlayer = new MediaPlayer();
-        mediaPlayer.setAudioAttributes(
-                new AudioAttributes.Builder()
-                        .setContentType(AudioAttributes.CONTENT_TYPE_MUSIC)
-                        .setUsage(AudioAttributes.USAGE_MEDIA)
-                        .build()
-        );
-        try {
-            mediaPlayer.setDataSource(getContext(), uri);
-            mediaPlayer.prepare();
-        } catch (IOException e) {
-            e.printStackTrace();
-        }
-        mediaPlayer.start();
+        TextView mSongDetailTitle = binding.songDetailTextView;
 
 
         return view;
@@ -76,6 +46,5 @@ public class SongDetailFragment extends Fragment {
     @Override
     public void onStop() {
         super.onStop();
-        mediaPlayer.release();
     }
 }
