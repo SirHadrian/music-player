@@ -1,10 +1,6 @@
 package com.sirhadrian.musicplayer.ui;
 
-import android.content.Context;
-import android.database.Cursor;
-import android.net.Uri;
 import android.os.Bundle;
-import android.provider.MediaStore;
 import android.util.Log;
 import android.view.LayoutInflater;
 import android.view.View;
@@ -16,27 +12,31 @@ import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
 import androidx.appcompat.widget.Toolbar;
 import androidx.fragment.app.Fragment;
-import androidx.fragment.app.FragmentManager;
+import androidx.lifecycle.ViewModelProvider;
 import androidx.recyclerview.widget.LinearLayoutManager;
 import androidx.recyclerview.widget.RecyclerView;
+import androidx.viewpager2.widget.ViewPager2;
 
 import com.sirhadrian.musicplayer.R;
 import com.sirhadrian.musicplayer.databinding.FragmentSongsListBinding;
-import com.sirhadrian.musicplayer.model.AudioModel;
+import com.sirhadrian.musicplayer.model.SongModel;
 
 import java.io.File;
 import java.util.ArrayList;
-import java.util.HashMap;
 import java.util.List;
-import java.util.concurrent.Executor;
-import java.util.concurrent.Executors;
 
 public class SongsListFragment extends Fragment {
-    private List<HashMap<String, String>> mSongsList;
 
+    private List<SongModel> mSongsList;
+    private SharedDataViewModel mSharedData;
     private RecyclerView mRecyclerView;
     private SongsAdapter mSongsAdapter;
+    private ViewPager2 viewPager2Activity;
 
+
+    public SongsListFragment(ViewPager2 viewPager) {
+        this.viewPager2Activity = viewPager;
+    }
 
     @Nullable
     @Override
@@ -47,6 +47,8 @@ public class SongsListFragment extends Fragment {
                 false);
 
         View view = binding.getRoot();
+
+        mSharedData = new ViewModelProvider(requireActivity()).get(SharedDataViewModel.class);
 
         mRecyclerView = binding.fragmentSongsListRecyclerView;
         mRecyclerView.setLayoutManager(new LinearLayoutManager(getContext()));
@@ -59,10 +61,9 @@ public class SongsListFragment extends Fragment {
 
                         case R.id.scan:
                             String myFolderTemp = "/storage/44A6-B704/Documents/Music/E_B_M";
-                            mSongsList = getPlayList(myFolderTemp);
+                            mSongsList = this.getPlayList(myFolderTemp);
 
                             if (mSongsList != null) {
-
                                 mSongsAdapter = new SongsAdapter(mSongsList);
                                 mRecyclerView.setAdapter(mSongsAdapter);
                             }
@@ -91,11 +92,12 @@ public class SongsListFragment extends Fragment {
         return view;
     }
 
+
     private class SongsAdapter extends RecyclerView.Adapter<SongsAdapter.SongHolder> {
 
-        private List<HashMap<String, String>> mSongsTitles;
+        private final List<SongModel> mSongsTitles;
 
-        public SongsAdapter(List<HashMap<String, String>> songs) {
+        public SongsAdapter(List<SongModel> songs) {
             this.mSongsTitles = songs;
         }
 
@@ -109,8 +111,9 @@ public class SongsListFragment extends Fragment {
 
         @Override
         public void onBindViewHolder(@NonNull SongHolder holder, int position) {
-            holder.get_mSongTitle().setText(mSongsTitles.get(position).get("file_name"));
-            holder.set_mSongPath(mSongsTitles.get(position).get("file_path"));
+            holder.get_mSongModel().set_mSongTitle(mSongsList.get(position).get_mSongTitle());
+            holder.get_mSongModel().set_mSongUri(mSongsTitles.get(position).get_mSongUri());
+            holder.get_mSongTitle().setText(mSongsTitles.get(position).get_mSongTitle());
         }
 
         @Override
@@ -120,55 +123,46 @@ public class SongsListFragment extends Fragment {
 
 
         private class SongHolder extends RecyclerView.ViewHolder implements View.OnClickListener {
-            private final TextView mSongTitle;
-            private String mSongPath;
+            private final TextView mSongTitleTextView;
+            private SongModel mSongModel;
 
             public SongHolder(@NonNull View itemView) {
                 super(itemView);
-                mSongTitle = itemView.findViewById(R.id.songTitle);
-                mSongTitle.setOnClickListener(this);
+                mSongTitleTextView = itemView.findViewById(R.id.songTitle);
+                mSongTitleTextView.setOnClickListener(this);
+            }
+
+            public SongModel get_mSongModel() {
+                if (mSongModel == null) {
+                    mSongModel = new SongModel();
+                }
+                return mSongModel;
             }
 
             public TextView get_mSongTitle() {
-                return mSongTitle;
-            }
-
-            public String get_mSongPath() {
-                return mSongPath;
-            }
-
-            public void set_mSongPath(String mSongPath) {
-                this.mSongPath = mSongPath;
+                return mSongTitleTextView;
             }
 
             @Override
             public void onClick(View view) {
-                Toast.makeText(getContext(), get_mSongTitle().getText().toString() + " Clicked!",
+                Toast.makeText(getContext(), mSongModel.get_mSongTitle() + " Clicked!",
                         Toast.LENGTH_SHORT).show();
 
-                FragmentManager fragmentManager = getActivity().getSupportFragmentManager();
-                Fragment fragment = new SongDetailFragment();
+                mSharedData.select(get_mSongModel());
 
-                Bundle bundle = new Bundle();
-                bundle.putString("path", mSongPath);
-                bundle.putString("name", mSongTitle.getText().toString());
-                fragment.setArguments(bundle);
-
-                fragmentManager.beginTransaction()
-                        .setReorderingAllowed(true)
-                        .replace(R.id.fragment_holder, fragment)
-                        .commit();
-
+                viewPager2Activity.setCurrentItem(viewPager2Activity.getCurrentItem() + 1);
             }
         }
     }
 
-    ArrayList<HashMap<String, String>> getPlayList(String rootPath) {
-        ArrayList<HashMap<String, String>> fileList = new ArrayList<>();
+
+    List<SongModel> getPlayList(String rootPath) {
+        List<SongModel> fileList = new ArrayList<>();
 
         try {
             File rootFolder = new File(rootPath);
             File[] files = rootFolder.listFiles();
+            assert files != null;
             for (File file : files) {
                 if (file.isDirectory()) {
                     if (getPlayList(file.getAbsolutePath()) != null) {
@@ -177,9 +171,7 @@ public class SongsListFragment extends Fragment {
                         break;
                     }
                 } else if (file.getName().endsWith(".mp3")) {
-                    HashMap<String, String> song = new HashMap<>();
-                    song.put("file_path", file.getAbsolutePath());
-                    song.put("file_name", file.getName());
+                    SongModel song = new SongModel(file.getName(), file.getAbsolutePath());
                     fileList.add(song);
                 }
             }
