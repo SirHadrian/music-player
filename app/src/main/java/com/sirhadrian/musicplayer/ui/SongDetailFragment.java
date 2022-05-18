@@ -4,7 +4,6 @@ import android.media.AudioAttributes;
 import android.media.MediaPlayer;
 import android.net.Uri;
 import android.os.Bundle;
-import android.provider.MediaStore;
 import android.util.Log;
 import android.view.LayoutInflater;
 import android.view.View;
@@ -25,8 +24,7 @@ import java.io.IOException;
 public class SongDetailFragment extends Fragment {
 
     private TextView mSongDetailTitle;
-    private MediaPlayer mediaPlayer;
-    private String[] list;
+    MediaPlayer mediaPlayer;
 
     public SongDetailFragment() {
 
@@ -36,23 +34,27 @@ public class SongDetailFragment extends Fragment {
     @Override
     public View onCreateView(@NonNull LayoutInflater inflater, @Nullable ViewGroup container,
                              @Nullable Bundle savedInstanceState) {
+
         FragmentSongDetailBinding binding = FragmentSongDetailBinding.inflate(inflater, container,
                 false);
+
         View view = binding.getRoot();
+
         mSongDetailTitle = binding.songDetailTextView;
 
         FragmentManager fragmentManager = getActivity().getSupportFragmentManager();
         Fragment fragment = fragmentManager.findFragmentById(R.id.fragment_holder);
 
         assert fragment != null;
+        assert fragment.getArguments() != null;
         mSongDetailTitle.setText(fragment.getArguments().getString("name"));
 
         Uri uri = Uri.fromFile(new File(fragment.getArguments().getString("path")));
 
-        Log.d("uri", fragment.getArguments().getString("path").toString());
+        Log.d("uri", fragment.getArguments().getString("path"));
 
 
-        MediaPlayer mediaPlayer = new MediaPlayer();
+        mediaPlayer = new MediaPlayer();
         mediaPlayer.setAudioAttributes(
                 new AudioAttributes.Builder()
                         .setContentType(AudioAttributes.CONTENT_TYPE_MUSIC)

@@ -25,7 +25,7 @@ public class MainActivity extends AppCompatActivity {
         FragmentManager fragmentManager = getSupportFragmentManager();
         Fragment fragment = fragmentManager.findFragmentById(R.id.fragment_holder);
         if (fragment == null) {
-            fragment=new SongsListFragment();
+            fragment = new SongsListFragment();
             fragmentManager.beginTransaction()
                     .setReorderingAllowed(true)
                     .add(R.id.fragment_holder, fragment)
