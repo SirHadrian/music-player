@@ -50,21 +50,22 @@ public class SongDetailFragment extends Fragment {
         );
 
         mSharedData = new ViewModelProvider(requireActivity()).get(SharedDataViewModel.class);
-        mSharedData.getPlayingNow().observe(getViewLifecycleOwner(), new Observer<SongModel>() {
-            @Override
-            public void onChanged(SongModel songModel) {
-                mSongDetailTitle.setText(songModel.get_mSongTitle());
+        mSharedData.getPlayingNow().observe(getViewLifecycleOwner(), songModel -> {
+            mSongDetailTitle.setText(songModel.get_mSongTitle());
 
-                Uri uri = Uri.fromFile(new File(songModel.get_mSongUri()));
+            Uri uri = Uri.fromFile(new File(songModel.get_mSongUri()));
 
-                try {
-                    mPlayer.setDataSource(getContext(), uri);
-                    mPlayer.prepare();
-                } catch (IOException e) {
-                    e.printStackTrace();
-                }
-                mPlayer.start();
+            if (mPlayer.isPlaying()) {
+                mPlayer.stop();
             }
+            mPlayer.reset();
+            try {
+                mPlayer.setDataSource(getContext(), uri);
+                mPlayer.prepare();
+            } catch (IOException e) {
+                e.printStackTrace();
+            }
+            mPlayer.start();
         });
 
         return view;
@@ -73,6 +74,8 @@ public class SongDetailFragment extends Fragment {
     @Override
     public void onStop() {
         super.onStop();
-        mPlayer.release();
+        if (mPlayer != null) {
+            mPlayer.release();
+        }
     }
 }

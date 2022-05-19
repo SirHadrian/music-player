@@ -20,10 +20,14 @@ import androidx.viewpager2.widget.ViewPager2;
 import com.sirhadrian.musicplayer.R;
 import com.sirhadrian.musicplayer.databinding.FragmentSongsListBinding;
 import com.sirhadrian.musicplayer.model.SongModel;
+import com.sirhadrian.musicplayer.utils.Result;
+import com.sirhadrian.musicplayer.utils.ResultCallback;
 
 import java.io.File;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.concurrent.ExecutorService;
+import java.util.concurrent.Executors;
 
 public class SongsListFragment extends Fragment {
 
@@ -31,7 +35,7 @@ public class SongsListFragment extends Fragment {
     private SharedDataViewModel mSharedData;
     private RecyclerView mRecyclerView;
     private SongsAdapter mSongsAdapter;
-    private ViewPager2 viewPager2Activity;
+    private final ViewPager2 viewPager2Activity;
 
 
     public SongsListFragment(ViewPager2 viewPager) {
@@ -61,25 +65,18 @@ public class SongsListFragment extends Fragment {
 
                         case R.id.scan:
                             String myFolderTemp = "/storage/44A6-B704/Documents/Music/E_B_M";
-                            mSongsList = this.getPlayList(myFolderTemp);
 
-                            if (mSongsList != null) {
-                                mSongsAdapter = new SongsAdapter(mSongsList);
-                                mRecyclerView.setAdapter(mSongsAdapter);
-                            }
-                            /*
-                            Executor executor = Executors.newSingleThreadExecutor();
-                            executor.execute(new Runnable() {
-                                @Override
-                                public void run() {
-                                    Log.d("scan", "Am access to external storage");
-                                    Log.d("scan", "Started Scanning");
-
-
+                            makeScanRequest(myFolderTemp, result -> {
+                                if (result instanceof Result.Success) {
+                                    mSongsList = ((Result.Success<List<SongModel>>) result).get_Data();
+                                    if (mSongsList != null) {
+                                        mSongsAdapter = new SongsAdapter(mSongsList);
+                                        mRecyclerView.setAdapter(mSongsAdapter);
+                                    }
+                                } else if (result instanceof Result.Error) {
+                                    ((Result.Error<List<SongModel>>) result).exception.printStackTrace();
                                 }
                             });
-                            */
-
                             Log.d("scan", "End Scan");
                             break;
                         default:
@@ -92,6 +89,18 @@ public class SongsListFragment extends Fragment {
         return view;
     }
 
+    private void makeScanRequest(String folder, ResultCallback<List<SongModel>> callback) {
+        ExecutorService executor = Executors.newSingleThreadExecutor();
+        executor.execute(() -> {
+            try {
+                Result<List<SongModel>> result = new Result.Success<>(getPlayList(folder));
+                callback.onComplete(result);
+            } catch (Exception e) {
+                Result<List<SongModel>> errorResult = new Result.Error<>(e);
+                callback.onComplete(errorResult);
+            }
+        });
+    }
 
     private class SongsAdapter extends RecyclerView.Adapter<SongsAdapter.SongHolder> {
 
