@@ -1,5 +1,6 @@
 package com.sirhadrian.musicplayer.ui;
 
+import android.content.Intent;
 import android.os.Bundle;
 import android.util.Log;
 import android.view.LayoutInflater;
@@ -20,6 +21,7 @@ import androidx.viewpager2.widget.ViewPager2;
 import com.sirhadrian.musicplayer.R;
 import com.sirhadrian.musicplayer.databinding.FragmentSongsListBinding;
 import com.sirhadrian.musicplayer.model.SongModel;
+import com.sirhadrian.musicplayer.settings.Settings;
 import com.sirhadrian.musicplayer.utils.Result;
 import com.sirhadrian.musicplayer.utils.ResultCallback;
 
@@ -61,11 +63,11 @@ public class SongsListFragment extends Fragment {
         toolbar.setOnMenuItemClickListener(item -> {
                     switch (item.getItemId()) {
                         case R.id.settings:
+                            makeSettingsRequest();
                             break;
 
                         case R.id.scan:
                             String myFolderTemp = "/storage/44A6-B704/Documents/Music/E_B_M";
-
                             makeScanRequest(myFolderTemp, result -> {
                                 if (result instanceof Result.Success) {
                                     mSongsList = ((Result.Success<List<SongModel>>) result).get_Data();
@@ -79,6 +81,7 @@ public class SongsListFragment extends Fragment {
                             });
                             Log.d("scan", "End Scan");
                             break;
+
                         default:
                             return false;
                     }
@@ -87,6 +90,11 @@ public class SongsListFragment extends Fragment {
                 }
         );
         return view;
+    }
+
+    private void makeSettingsRequest() {
+        Intent intent = new Intent(getContext(), Settings.class);
+        startActivity(intent);
     }
 
     private void makeScanRequest(String folder, ResultCallback<List<SongModel>> callback) {

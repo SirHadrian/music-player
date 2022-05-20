@@ -4,4 +4,6 @@
     <string name="search">Search</string>
     <string name="more">Settings</string>
     <string name="scan">Scan</string>
+    <string name="directory">Directory</string>
+    <string name="get_dir_path">GET DIR PATH</string>
 </resources>
