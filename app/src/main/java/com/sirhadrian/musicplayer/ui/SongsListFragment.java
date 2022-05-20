@@ -1,7 +1,11 @@
 package com.sirhadrian.musicplayer.ui;
 
+import android.content.Context;
 import android.content.Intent;
+import android.content.SharedPreferences;
+import android.net.Uri;
 import android.os.Bundle;
+import android.preference.PreferenceManager;
 import android.util.Log;
 import android.view.LayoutInflater;
 import android.view.View;
@@ -28,6 +32,7 @@ import com.sirhadrian.musicplayer.utils.ResultCallback;
 import java.io.File;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Objects;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 
@@ -38,6 +43,11 @@ public class SongsListFragment extends Fragment {
     private RecyclerView mRecyclerView;
     private SongsAdapter mSongsAdapter;
     private final ViewPager2 viewPager2Activity;
+
+    private String searchFolder;
+
+    final String defaultValue = "/storage";
+    SharedPreferences settings;
 
 
     public SongsListFragment(ViewPager2 viewPager) {
@@ -51,6 +61,9 @@ public class SongsListFragment extends Fragment {
 
         FragmentSongsListBinding binding = FragmentSongsListBinding.inflate(inflater, container,
                 false);
+
+        settings = PreferenceManager.getDefaultSharedPreferences(getActivity().getApplicationContext());
+        searchFolder = settings.getString(Settings.uriKey, defaultValue);
 
         View view = binding.getRoot();
 
@@ -67,8 +80,7 @@ public class SongsListFragment extends Fragment {
                             break;
 
                         case R.id.scan:
-                            String myFolderTemp = "/storage/44A6-B704/Documents/Music/E_B_M";
-                            makeScanRequest(myFolderTemp, result -> {
+                            makeScanRequest(searchFolder, result -> {
                                 if (result instanceof Result.Success) {
                                     mSongsList = ((Result.Success<List<SongModel>>) result).get_Data();
                                     if (mSongsList != null) {
@@ -172,6 +184,15 @@ public class SongsListFragment extends Fragment {
         }
     }
 
+    @Override
+    public void onResume() {
+        super.onResume();
+
+        if (settings == null) {
+            settings = requireActivity().getPreferences(Context.MODE_PRIVATE);
+        }
+        searchFolder = settings.getString(Settings.uriKey, defaultValue);
+    }
 
     List<SongModel> getPlayList(String rootPath) {
         List<SongModel> fileList = new ArrayList<>();
