@@ -1,4 +1,4 @@
-package com.sirhadrian.musicplayer;
+package com.sirhadrian.musicplayer.ui.viewpager;
 
 import androidx.annotation.NonNull;
 import androidx.fragment.app.Fragment;

@@ -13,6 +13,7 @@ import androidx.activity.result.contract.ActivityResultContracts;
 import androidx.appcompat.app.ActionBar;
 import androidx.appcompat.app.AppCompatActivity;
 import androidx.appcompat.widget.Toolbar;
+import androidx.lifecycle.ViewModelProvider;
 
 import com.sirhadrian.musicplayer.databinding.ActivitySettingsBinding;
 
@@ -20,19 +21,19 @@ import java.io.File;
 
 public class Settings extends AppCompatActivity {
 
-    public static final String uriKey = "dirUri";
-    SharedPreferences settings;
     TextView dirPath;
+    SettingsViewModel settingsViewModel;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
 
+        settingsViewModel= new ViewModelProvider(this).get(SettingsViewModel.class);
+
+
         ActivitySettingsBinding binding = ActivitySettingsBinding.inflate(getLayoutInflater());
         View root = binding.getRoot();
         setContentView(root);
-
-
 
         dirPath = binding.textViewDirPath;
         Button getDirPath = binding.buttonStartIntent;
@@ -43,33 +44,20 @@ public class Settings extends AppCompatActivity {
         assert actionbar != null;
         actionbar.setDisplayHomeAsUpEnabled(true);
 
+
         ActivityResultLauncher<Uri> pathLauncher = registerForActivityResult(
                 new ActivityResultContracts.OpenDocumentTree(),
-                result -> dirPath.setText(result.toString())
+                result -> {
+                    dirPath.setText(result.toString());
+                }
         );
 
-        getDirPath.setOnClickListener(view -> pathLauncher.launch(Uri.fromFile(new File("/storage/0/"))));
+        getDirPath.setOnClickListener(view -> pathLauncher.launch(Uri.fromFile(new File("/storage"))));
     }
 
     @Override
-    protected void onStart() {
-        super.onStart();
-        settings = PreferenceManager.getDefaultSharedPreferences(getApplicationContext());
-    }
-
-    @Override
-    protected void onStop() {
-        super.onStop();
-
-    }
-
-    @Override
-    protected void onResume() {
-        super.onResume();
-        if (settings != null) {
-            SharedPreferences.Editor editor = settings.edit();
-            editor.putString(uriKey, dirPath.getText().toString());
-            editor.apply();
-        }
+    protected void onPause() {
+        super.onPause();
+        settingsViewModel.set_mDirPath(dirPath.getText().toString());
     }
 }

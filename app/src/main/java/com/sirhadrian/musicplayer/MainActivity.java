@@ -5,43 +5,30 @@ import android.view.View;
 
 import androidx.appcompat.app.AppCompatActivity;
 import androidx.fragment.app.Fragment;
-import androidx.viewpager2.adapter.FragmentStateAdapter;
-import androidx.viewpager2.widget.ViewPager2;
+import androidx.fragment.app.FragmentManager;
 
-import com.sirhadrian.musicplayer.databinding.FragmentViewpagerBinding;
-import com.sirhadrian.musicplayer.ui.SongDetailFragment;
-import com.sirhadrian.musicplayer.ui.SongsListFragment;
-
-import java.util.ArrayList;
-import java.util.List;
+import com.sirhadrian.musicplayer.databinding.FragmentHolderBinding;
+import com.sirhadrian.musicplayer.ui.viewpager.ViewPagerFragment;
 
 public class MainActivity extends AppCompatActivity {
-
-    private List<Fragment> mViewPagerFragments;
-    private FragmentStateAdapter mFragmentStateAdapter;
-    private ViewPager2 mFragmentViewPager;
 
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
 
-        FragmentViewpagerBinding binding = FragmentViewpagerBinding.inflate(getLayoutInflater());
-        View view = binding.getRoot();
-        setContentView(view);
+        FragmentHolderBinding binding = FragmentHolderBinding.inflate(getLayoutInflater());
+        View root = binding.getRoot();
+        setContentView(root);
 
-        mFragmentViewPager = binding.fragmentViewPager2;
-
-        mViewPagerFragments = new ArrayList<>();
-
-        Fragment songsListFragment = new SongsListFragment(mFragmentViewPager);
-        Fragment songDetailFragment = new SongDetailFragment();
-
-        mViewPagerFragments.add(songsListFragment);
-        mViewPagerFragments.add(songDetailFragment);
-
-        mFragmentStateAdapter = new FragmentPageAdapter(this, mViewPagerFragments);
-        mFragmentViewPager.setAdapter(mFragmentStateAdapter);
-
+        FragmentManager fragmentManager = getSupportFragmentManager();
+        Fragment fragment = fragmentManager.findFragmentById(R.id.fragment_holder);
+        if (fragment == null) {
+            fragment = new ViewPagerFragment();
+            fragmentManager.beginTransaction()
+                    .setReorderingAllowed(true)
+                    .add(R.id.fragment_holder, fragment)
+                    .commit();
+        }
     }
 }

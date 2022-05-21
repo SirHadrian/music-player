@@ -1,11 +1,7 @@
 package com.sirhadrian.musicplayer.ui;
 
-import android.content.Context;
 import android.content.Intent;
-import android.content.SharedPreferences;
-import android.net.Uri;
 import android.os.Bundle;
-import android.preference.PreferenceManager;
 import android.util.Log;
 import android.view.LayoutInflater;
 import android.view.View;
@@ -26,28 +22,28 @@ import com.sirhadrian.musicplayer.R;
 import com.sirhadrian.musicplayer.databinding.FragmentSongsListBinding;
 import com.sirhadrian.musicplayer.model.SongModel;
 import com.sirhadrian.musicplayer.settings.Settings;
+import com.sirhadrian.musicplayer.settings.SettingsViewModel;
 import com.sirhadrian.musicplayer.utils.Result;
 import com.sirhadrian.musicplayer.utils.ResultCallback;
 
 import java.io.File;
 import java.util.ArrayList;
 import java.util.List;
-import java.util.Objects;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 
 public class SongsListFragment extends Fragment {
 
     private List<SongModel> mSongsList;
+
     private SharedDataViewModel mSharedData;
+    private SettingsViewModel mSettings;
+
     private RecyclerView mRecyclerView;
     private SongsAdapter mSongsAdapter;
     private final ViewPager2 viewPager2Activity;
 
     private String searchFolder;
-
-    final String defaultValue = "/storage";
-    SharedPreferences settings;
 
 
     public SongsListFragment(ViewPager2 viewPager) {
@@ -62,17 +58,16 @@ public class SongsListFragment extends Fragment {
         FragmentSongsListBinding binding = FragmentSongsListBinding.inflate(inflater, container,
                 false);
 
-        settings = PreferenceManager.getDefaultSharedPreferences(getActivity().getApplicationContext());
-        searchFolder = settings.getString(Settings.uriKey, defaultValue);
-
         View view = binding.getRoot();
 
         mSharedData = new ViewModelProvider(requireActivity()).get(SharedDataViewModel.class);
+        mSettings = new ViewModelProvider(requireActivity()).get(SettingsViewModel.class);
+        mSettings.get_mDirPath().observe(getViewLifecycleOwner(), s -> searchFolder = s);
 
         mRecyclerView = binding.fragmentSongsListRecyclerView;
         mRecyclerView.setLayoutManager(new LinearLayoutManager(getContext()));
 
-        Toolbar toolbar = binding.myToolbar;
+        Toolbar toolbar = requireActivity().findViewById(R.id.my_toolbar);
         toolbar.setOnMenuItemClickListener(item -> {
                     switch (item.getItemId()) {
                         case R.id.settings:
@@ -182,16 +177,6 @@ public class SongsListFragment extends Fragment {
                 viewPager2Activity.setCurrentItem(viewPager2Activity.getCurrentItem() + 1);
             }
         }
-    }
-
-    @Override
-    public void onResume() {
-        super.onResume();
-
-        if (settings == null) {
-            settings = requireActivity().getPreferences(Context.MODE_PRIVATE);
-        }
-        searchFolder = settings.getString(Settings.uriKey, defaultValue);
     }
 
     List<SongModel> getPlayList(String rootPath) {
