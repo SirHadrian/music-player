@@ -55,7 +55,7 @@ public class SongDetailFragment extends Fragment {
 
             mSongDetailTitle.setText(songModel.get_mSongTitle());
 
-            Uri uri = Uri.parse("content://com.android.externalstorage.documents/tree/44A6-B704%3ADocuments%2FC_E_M/document/44A6-B704%3ADocuments%2FC_E_M%2FElven%20Star.mp3");
+            Uri uri = songModel.get_mSongUri();
 
             if (mPlayer.isPlaying()) {
                 mPlayer.stop();

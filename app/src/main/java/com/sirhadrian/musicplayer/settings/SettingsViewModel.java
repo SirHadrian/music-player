@@ -7,13 +7,12 @@ import androidx.lifecycle.ViewModel;
 
 public class SettingsViewModel extends ViewModel {
     private final MutableLiveData<String> mDirPath = new MutableLiveData<>();
-    private final MutableLiveData<DocumentFile[]> listOfFileInDir = new MutableLiveData<>();
 
-    public MutableLiveData<DocumentFile[]> get_ListOfFileInDir() {
-        return listOfFileInDir;
+    public void set_mDirPath(String path) {
+        mDirPath.setValue(path);
     }
 
-    public MutableLiveData<String> get_mDirPath() {
+    public LiveData<String> get_mDirPath() {
         return mDirPath;
     }
 }

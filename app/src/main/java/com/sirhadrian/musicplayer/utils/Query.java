@@ -1,6 +1,5 @@
 package com.sirhadrian.musicplayer.utils;
 
-import android.annotation.TargetApi;
 import android.content.ContentUris;
 import android.content.Context;
 import android.database.Cursor;
@@ -9,14 +8,9 @@ import android.os.Build;
 import android.os.Environment;
 import android.provider.DocumentsContract;
 import android.provider.MediaStore;
-import android.util.Log;
 
-import androidx.documentfile.provider.DocumentFile;
-
-import com.sirhadrian.musicplayer.model.Song;
 import com.sirhadrian.musicplayer.model.SongModel;
 
-import java.io.File;
 import java.util.ArrayList;
 import java.util.List;
 
@@ -25,8 +19,8 @@ public class Query {
     public Query() {
     }
 
-    public static List<Song> getAllAudioFromDevice(final Context context) {
-        List<Song> songs = new ArrayList<>();
+    public static List<SongModel> getAllAudioFromDevice(final Context context) {
+        List<SongModel> songs = new ArrayList<>();
 
         Uri collection;
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.Q) {
@@ -64,7 +58,7 @@ public class Query {
                 assert contentUri != null;
                 // Stores column values and the contentUri in a local object
                 // that represents the media file.
-                songs.add(new Song(contentUri, name));
+                songs.add(new SongModel(name, contentUri));
             }
         }
         return songs;
@@ -192,30 +186,4 @@ public class Query {
         return "com.google.android.apps.photos.content".equals(uri.getAuthority());
     }
 
-    public static List<SongModel> getPlayList(String rootPath) {
-        List<SongModel> fileList = new ArrayList<>();
-
-        try {
-            File rootFolder = new File(rootPath);
-            File[] files = rootFolder.listFiles();
-            assert files != null;
-            for (File file : files) {
-                if (file.isDirectory()) {
-                    if (getPlayList(file.getAbsolutePath()) != null) {
-                        fileList.addAll(getPlayList(file.getAbsolutePath()));
-                    } else {
-                        break;
-                    }
-                } else if (file.getName().endsWith(".mp3")) {
-                    SongModel song = new SongModel(file.getName(), file.getAbsolutePath());
-                    fileList.add(song);
-                }
-            }
-
-            return fileList;
-        } catch (Exception e) {
-            Log.d("scan", e.toString());
-        }
-        return null;
-    }
 }

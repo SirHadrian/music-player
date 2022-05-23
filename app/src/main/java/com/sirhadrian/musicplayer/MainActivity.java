@@ -31,6 +31,8 @@ public class MainActivity extends AppCompatActivity {
     private SettingsViewModel settingsViewModel;
     private SongsListViewModel songsListViewModel;
 
+    private List<SongModel> temp;
+
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -53,16 +55,18 @@ public class MainActivity extends AppCompatActivity {
                     break;
 
                 case R.id.scan:
-                    if (searchFolder == null) return false;
-
+                    /*
                     makeScanRequest(searchFolder, result -> {
                         if (result instanceof Result.Success) {
-                            songsListViewModel.get_mSongsList()
-                                    .setValue(((Result.Success<List<SongModel>>) result).get_Data());
+                            temp = ((Result.Success<List<SongModel>>) result).get_Data();
                         } else if (result instanceof Result.Error) {
                             ((Result.Error<List<SongModel>>) result).exception.printStackTrace();
                         }
                     });
+                    */
+                    temp=Query.getAllAudioFromDevice(this);
+                    songsListViewModel.set_mSongList(temp);
+
                     Log.d("scan", "End Scan");
                     break;
 
@@ -86,7 +90,7 @@ public class MainActivity extends AppCompatActivity {
         ExecutorService executor = Executors.newSingleThreadExecutor();
         executor.execute(() -> {
             try {
-                Result<List<SongModel>> result = new Result.Success<>(Query.getPlayList(folder));
+                Result<List<SongModel>> result = new Result.Success<>(Query.getAllAudioFromDevice(this));
                 callback.onComplete(result);
             } catch (Exception e) {
                 Result<List<SongModel>> errorResult = new Result.Error<>(e);
