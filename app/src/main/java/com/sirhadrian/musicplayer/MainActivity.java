@@ -1,11 +1,14 @@
 package com.sirhadrian.musicplayer;
 
+import android.net.Uri;
 import android.os.Bundle;
+import android.provider.DocumentsContract;
 import android.util.Log;
 import android.view.View;
 
 import androidx.appcompat.app.AppCompatActivity;
 import androidx.appcompat.widget.Toolbar;
+import androidx.core.graphics.PathUtils;
 import androidx.fragment.app.Fragment;
 import androidx.fragment.app.FragmentManager;
 import androidx.lifecycle.ViewModelProvider;
@@ -26,7 +29,7 @@ import java.util.concurrent.Executors;
 
 public class MainActivity extends AppCompatActivity {
 
-    private String searchFolder;
+    private Uri searchFolder;
 
     private SettingsViewModel settingsViewModel;
     private SongsListViewModel songsListViewModel;
@@ -64,7 +67,17 @@ public class MainActivity extends AppCompatActivity {
                         }
                     });
                     */
-                    temp=Query.getAllAudioFromDevice(this);
+                    //TODO Make new thread for search query
+
+                    //test folder
+                    assert searchFolder != null;
+                    Uri testFolder = searchFolder;
+                    //String path=testFolder
+                    // TODO get string absolute path form uri
+                    Log.d("folder", searchFolder.toString());
+                    Log.d("folder", path);
+
+                    temp = Query.getAllAudioFromDevice(this, path);
                     songsListViewModel.set_mSongList(temp);
 
                     Log.d("scan", "End Scan");
@@ -90,7 +103,7 @@ public class MainActivity extends AppCompatActivity {
         ExecutorService executor = Executors.newSingleThreadExecutor();
         executor.execute(() -> {
             try {
-                Result<List<SongModel>> result = new Result.Success<>(Query.getAllAudioFromDevice(this));
+                Result<List<SongModel>> result = new Result.Success<>(Query.getAllAudioFromDevice(this, null));
                 callback.onComplete(result);
             } catch (Exception e) {
                 Result<List<SongModel>> errorResult = new Result.Error<>(e);

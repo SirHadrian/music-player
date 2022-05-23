@@ -1,6 +1,9 @@
 package com.sirhadrian.musicplayer.ui;
 
+import android.net.Uri;
 import android.os.Bundle;
+import android.provider.MediaStore;
+import android.util.Log;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
@@ -22,6 +25,7 @@ import com.sirhadrian.musicplayer.settings.SettingsViewModel;
 
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Set;
 
 public class SongsListFragment extends Fragment {
 
@@ -35,7 +39,7 @@ public class SongsListFragment extends Fragment {
     private SongsAdapter mSongsAdapter;
     private final ViewPager2 viewPager2Activity;
 
-    private String searchFolder;
+    private Uri searchFolder;
 
 
     public SongsListFragment(ViewPager2 viewPager) {
@@ -73,6 +77,16 @@ public class SongsListFragment extends Fragment {
             mSongsList.addAll(songModels);
             mSongsAdapter.notifyDataSetChanged();
         });
+
+        //test
+
+
+
+        if (android.os.Build.VERSION.SDK_INT >= android.os.Build.VERSION_CODES.Q) {
+            Set<String> mediaVolumes = MediaStore.getExternalVolumeNames(requireActivity());
+
+            Log.d("vol", mediaVolumes.toString());
+        }
 
         return view;
     }

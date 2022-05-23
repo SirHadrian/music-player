@@ -38,7 +38,10 @@ public class SettingsFragment extends Fragment {
 
         ActivityResultLauncher<Uri> pathLauncher = registerForActivityResult(
                 new ActivityResultContracts.OpenDocumentTree(),
-                result -> dirPath.setText(result.toString())
+                result -> {
+                    dirPath.setText(result.toString());
+                    settingsViewModel.set_mDirPath(result);
+                }
         );
 
         getDirPath.setOnClickListener(view -> pathLauncher.launch(Uri.fromFile(new File("/storage"))));
@@ -49,6 +52,5 @@ public class SettingsFragment extends Fragment {
     @Override
     public void onPause() {
         super.onPause();
-        settingsViewModel.set_mDirPath(dirPath.getText().toString());
     }
 }
