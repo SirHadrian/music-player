@@ -1,17 +1,19 @@
 package com.sirhadrian.musicplayer.settings;
 
+import androidx.documentfile.provider.DocumentFile;
 import androidx.lifecycle.LiveData;
 import androidx.lifecycle.MutableLiveData;
 import androidx.lifecycle.ViewModel;
 
 public class SettingsViewModel extends ViewModel {
     private final MutableLiveData<String> mDirPath = new MutableLiveData<>();
+    private final MutableLiveData<DocumentFile[]> listOfFileInDir = new MutableLiveData<>();
 
-    public void set_mDirPath(String path){
-        mDirPath.setValue(path);
+    public MutableLiveData<DocumentFile[]> get_ListOfFileInDir() {
+        return listOfFileInDir;
     }
 
-    public LiveData<String> get_mDirPath() {
+    public MutableLiveData<String> get_mDirPath() {
         return mDirPath;
     }
 }
