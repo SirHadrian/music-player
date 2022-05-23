@@ -2,13 +2,11 @@ package com.sirhadrian.musicplayer;
 
 import android.net.Uri;
 import android.os.Bundle;
-import android.provider.DocumentsContract;
 import android.util.Log;
 import android.view.View;
 
 import androidx.appcompat.app.AppCompatActivity;
 import androidx.appcompat.widget.Toolbar;
-import androidx.core.graphics.PathUtils;
 import androidx.fragment.app.Fragment;
 import androidx.fragment.app.FragmentManager;
 import androidx.lifecycle.ViewModelProvider;
@@ -34,8 +32,6 @@ public class MainActivity extends AppCompatActivity {
     private SettingsViewModel settingsViewModel;
     private SongsListViewModel songsListViewModel;
 
-    private List<SongModel> temp;
-
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -52,12 +48,18 @@ public class MainActivity extends AppCompatActivity {
 
         Toolbar toolbar = binding.myToolbar;
         toolbar.setOnMenuItemClickListener(item -> {
-            switch (item.getItemId()) {
-                case R.id.settings:
-                    openSettingsFragment();
-                    break;
+            int actionId = item.getItemId();
 
-                case R.id.scan:
+            if (actionId == R.id.settings) {
+                openSettingsFragment();
+            } else if (actionId == R.id.scan) {
+                assert searchFolder != null;
+                Log.d("folder", searchFolder.toString());
+
+                songsListViewModel.set_mSongList(
+                        Query.getSongsFromFolder(this, searchFolder)
+                );
+            } else return false;
                     /*
                     makeScanRequest(searchFolder, result -> {
                         if (result instanceof Result.Success) {
@@ -65,27 +67,7 @@ public class MainActivity extends AppCompatActivity {
                         } else if (result instanceof Result.Error) {
                             ((Result.Error<List<SongModel>>) result).exception.printStackTrace();
                         }
-                    });
-                    */
-                    //TODO Make new thread for search query
-
-                    //test folder
-                    assert searchFolder != null;
-                    Uri testFolder = searchFolder;
-                    //String path=testFolder
-                    // TODO get string absolute path form uri
-                    Log.d("folder", searchFolder.toString());
-                    Log.d("folder", path);
-
-                    temp = Query.getAllAudioFromDevice(this, path);
-                    songsListViewModel.set_mSongList(temp);
-
-                    Log.d("scan", "End Scan");
-                    break;
-
-                default:
-                    return false;
-            }
+                    });*/
 
             return true;
         });

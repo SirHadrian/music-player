@@ -6,6 +6,9 @@ import android.database.Cursor;
 import android.net.Uri;
 import android.os.Build;
 import android.provider.MediaStore;
+import android.util.Log;
+
+import androidx.documentfile.provider.DocumentFile;
 
 import com.sirhadrian.musicplayer.model.SongModel;
 
@@ -17,7 +20,24 @@ public class Query {
     public Query() {
     }
 
-    public static List<SongModel> getAllAudioFromDevice(final Context context, String folderName) {
+    public static List<SongModel> getSongsFromFolder(final Context context, Uri folder) {
+        List<SongModel> songs = new ArrayList<>();
+
+        DocumentFile dir = DocumentFile.fromTreeUri(context, folder);
+        assert dir != null;
+        DocumentFile[] filesInDir = dir.listFiles();
+
+        for (DocumentFile file : filesInDir) {
+            songs.add(new SongModel(file.getName(), file.getUri()));
+        }
+
+        Log.d("files", songs.toString());
+
+        return songs;
+    }
+
+
+    public static List<SongModel> getAllAudioFromDevice(final Context context, Uri folderName) {
         List<SongModel> songs = new ArrayList<>();
         //String testFolder="/storage/44A6-B704/Documents/C_E_M";
 
@@ -40,7 +60,7 @@ public class Query {
         }
 
         try (Cursor cursor = context.getApplicationContext().getContentResolver().query(
-                collection,
+                folderName,
                 projection,
                 selection,
                 selectionArgs,
