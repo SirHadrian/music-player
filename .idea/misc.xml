@@ -10,6 +10,7 @@
         <entry key="app/src/main/res/layout/activity_main.xml" value="0.33697916666666666" />
         <entry key="app/src/main/res/layout/activity_settings.xml" value="0.35260416666666666" />
         <entry key="app/src/main/res/layout/fragment_holder.xml" value="0.35260416666666666" />
+        <entry key="app/src/main/res/layout/fragment_settings.xml" value="0.35260416666666666" />
         <entry key="app/src/main/res/layout/fragment_song_detail.xml" value="0.3515625" />
         <entry key="app/src/main/res/layout/fragment_songs_list.xml" value="0.33" />
         <entry key="app/src/main/res/layout/fragment_viewpager.xml" value="0.3515625" />

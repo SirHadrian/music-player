@@ -11,6 +11,7 @@ import android.widget.TextView;
 
 import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
+import androidx.documentfile.provider.DocumentFile;
 import androidx.fragment.app.Fragment;
 import androidx.lifecycle.Observer;
 import androidx.lifecycle.ViewModelProvider;
@@ -51,9 +52,10 @@ public class SongDetailFragment extends Fragment {
 
         mSharedData = new ViewModelProvider(requireActivity()).get(SharedDataViewModel.class);
         mSharedData.getPlayingNow().observe(getViewLifecycleOwner(), songModel -> {
+
             mSongDetailTitle.setText(songModel.get_mSongTitle());
 
-            Uri uri = Uri.fromFile(new File(songModel.get_mSongUri()));
+            Uri uri = songModel.get_mSongUri();
 
             if (mPlayer.isPlaying()) {
                 mPlayer.stop();
@@ -62,11 +64,13 @@ public class SongDetailFragment extends Fragment {
             try {
                 mPlayer.setDataSource(getContext(), uri);
                 mPlayer.prepare();
+                mPlayer.start();
             } catch (IOException e) {
                 e.printStackTrace();
             }
-            mPlayer.start();
         });
+
+
 
         return view;
     }

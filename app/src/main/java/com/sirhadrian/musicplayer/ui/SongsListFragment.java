@@ -1,7 +1,8 @@
 package com.sirhadrian.musicplayer.ui;
 
-import android.content.Intent;
+import android.net.Uri;
 import android.os.Bundle;
+import android.provider.MediaStore;
 import android.util.Log;
 import android.view.LayoutInflater;
 import android.view.View;
@@ -11,7 +12,6 @@ import android.widget.Toast;
 
 import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
-import androidx.appcompat.widget.Toolbar;
 import androidx.fragment.app.Fragment;
 import androidx.lifecycle.ViewModelProvider;
 import androidx.recyclerview.widget.LinearLayoutManager;
@@ -21,16 +21,11 @@ import androidx.viewpager2.widget.ViewPager2;
 import com.sirhadrian.musicplayer.R;
 import com.sirhadrian.musicplayer.databinding.FragmentSongsListBinding;
 import com.sirhadrian.musicplayer.model.SongModel;
-import com.sirhadrian.musicplayer.settings.Settings;
 import com.sirhadrian.musicplayer.settings.SettingsViewModel;
-import com.sirhadrian.musicplayer.utils.Result;
-import com.sirhadrian.musicplayer.utils.ResultCallback;
 
-import java.io.File;
 import java.util.ArrayList;
 import java.util.List;
-import java.util.concurrent.ExecutorService;
-import java.util.concurrent.Executors;
+import java.util.Set;
 
 public class SongsListFragment extends Fragment {
 
@@ -38,12 +33,13 @@ public class SongsListFragment extends Fragment {
 
     private SharedDataViewModel mSharedData;
     private SettingsViewModel mSettings;
+    private SongsListViewModel mSongsListObserved;
 
     private RecyclerView mRecyclerView;
     private SongsAdapter mSongsAdapter;
     private final ViewPager2 viewPager2Activity;
 
-    private String searchFolder;
+    private Uri searchFolder;
 
 
     public SongsListFragment(ViewPager2 viewPager) {
@@ -60,61 +56,39 @@ public class SongsListFragment extends Fragment {
 
         View view = binding.getRoot();
 
-        mSharedData = new ViewModelProvider(requireActivity()).get(SharedDataViewModel.class);
+        mSongsList = new ArrayList<>();
+
+
         mSettings = new ViewModelProvider(requireActivity()).get(SettingsViewModel.class);
         mSettings.get_mDirPath().observe(getViewLifecycleOwner(), s -> searchFolder = s);
 
         mRecyclerView = binding.fragmentSongsListRecyclerView;
         mRecyclerView.setLayoutManager(new LinearLayoutManager(getContext()));
 
-        Toolbar toolbar = requireActivity().findViewById(R.id.my_toolbar);
-        toolbar.setOnMenuItemClickListener(item -> {
-                    switch (item.getItemId()) {
-                        case R.id.settings:
-                            makeSettingsRequest();
-                            break;
+        mSongsAdapter = new SongsAdapter(mSongsList);
+        mRecyclerView.setAdapter(mSongsAdapter);
 
-                        case R.id.scan:
-                            makeScanRequest(searchFolder, result -> {
-                                if (result instanceof Result.Success) {
-                                    mSongsList = ((Result.Success<List<SongModel>>) result).get_Data();
-                                    if (mSongsList != null) {
-                                        mSongsAdapter = new SongsAdapter(mSongsList);
-                                        mRecyclerView.setAdapter(mSongsAdapter);
-                                    }
-                                } else if (result instanceof Result.Error) {
-                                    ((Result.Error<List<SongModel>>) result).exception.printStackTrace();
-                                }
-                            });
-                            Log.d("scan", "End Scan");
-                            break;
 
-                        default:
-                            return false;
-                    }
+        mSharedData = new ViewModelProvider(requireActivity()).get(SharedDataViewModel.class);
+        mSongsListObserved = new ViewModelProvider(requireActivity()).get(SongsListViewModel.class);
 
-                    return true;
-                }
-        );
-        return view;
-    }
-
-    private void makeSettingsRequest() {
-        Intent intent = new Intent(getContext(), Settings.class);
-        startActivity(intent);
-    }
-
-    private void makeScanRequest(String folder, ResultCallback<List<SongModel>> callback) {
-        ExecutorService executor = Executors.newSingleThreadExecutor();
-        executor.execute(() -> {
-            try {
-                Result<List<SongModel>> result = new Result.Success<>(getPlayList(folder));
-                callback.onComplete(result);
-            } catch (Exception e) {
-                Result<List<SongModel>> errorResult = new Result.Error<>(e);
-                callback.onComplete(errorResult);
-            }
+        mSongsListObserved.get_mSongsList().observe(getViewLifecycleOwner(), songModels -> {
+            mSongsList.clear();
+            mSongsList.addAll(songModels);
+            mSongsAdapter.notifyDataSetChanged();
         });
+
+        //test
+
+
+
+        if (android.os.Build.VERSION.SDK_INT >= android.os.Build.VERSION_CODES.Q) {
+            Set<String> mediaVolumes = MediaStore.getExternalVolumeNames(requireActivity());
+
+            Log.d("vol", mediaVolumes.toString());
+        }
+
+        return view;
     }
 
     private class SongsAdapter extends RecyclerView.Adapter<SongsAdapter.SongHolder> {
@@ -137,6 +111,7 @@ public class SongsListFragment extends Fragment {
         public void onBindViewHolder(@NonNull SongHolder holder, int position) {
             holder.get_mSongModel().set_mSongTitle(mSongsList.get(position).get_mSongTitle());
             holder.get_mSongModel().set_mSongUri(mSongsTitles.get(position).get_mSongUri());
+
             holder.get_mSongTitle().setText(mSongsTitles.get(position).get_mSongTitle());
         }
 
@@ -179,30 +154,5 @@ public class SongsListFragment extends Fragment {
         }
     }
 
-    List<SongModel> getPlayList(String rootPath) {
-        List<SongModel> fileList = new ArrayList<>();
 
-        try {
-            File rootFolder = new File(rootPath);
-            File[] files = rootFolder.listFiles();
-            assert files != null;
-            for (File file : files) {
-                if (file.isDirectory()) {
-                    if (getPlayList(file.getAbsolutePath()) != null) {
-                        fileList.addAll(getPlayList(file.getAbsolutePath()));
-                    } else {
-                        break;
-                    }
-                } else if (file.getName().endsWith(".mp3")) {
-                    SongModel song = new SongModel(file.getName(), file.getAbsolutePath());
-                    fileList.add(song);
-                }
-            }
-
-            return fileList;
-        } catch (Exception e) {
-            Log.d("scan", e.toString());
-        }
-        return null;
-    }
 }
