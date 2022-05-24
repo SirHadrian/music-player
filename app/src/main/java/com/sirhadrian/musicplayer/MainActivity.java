@@ -32,6 +32,7 @@ public class MainActivity extends AppCompatActivity {
     private SettingsViewModel settingsViewModel;
     private SongsListViewModel songsListViewModel;
 
+    private List<SongModel> temp;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -54,20 +55,17 @@ public class MainActivity extends AppCompatActivity {
                 openSettingsFragment();
             } else if (actionId == R.id.scan) {
                 assert searchFolder != null;
-                Log.d("folder", searchFolder.toString());
+                //songsListViewModel.set_mSongList(Query.getSongsFromFolder(this, searchFolder));
 
-                songsListViewModel.set_mSongList(
-                        Query.getSongsFromFolder(this, searchFolder)
-                );
+                makeScanRequest(searchFolder, result -> {
+                    if (result instanceof Result.Success) {
+                        temp = ((Result.Success<List<SongModel>>) result).get_Data();
+                        songsListViewModel.set_value_in_worker_thread(temp);
+                    } else if (result instanceof Result.Error) {
+                        ((Result.Error<List<SongModel>>) result).exception.printStackTrace();
+                    }
+                });
             } else return false;
-                    /*
-                    makeScanRequest(searchFolder, result -> {
-                        if (result instanceof Result.Success) {
-                            temp = ((Result.Success<List<SongModel>>) result).get_Data();
-                        } else if (result instanceof Result.Error) {
-                            ((Result.Error<List<SongModel>>) result).exception.printStackTrace();
-                        }
-                    });*/
 
             return true;
         });
@@ -81,11 +79,11 @@ public class MainActivity extends AppCompatActivity {
         }
     }
 
-    private void makeScanRequest(String folder, ResultCallback<List<SongModel>> callback) {
+    private void makeScanRequest(Uri folder, ResultCallback<List<SongModel>> callback) {
         ExecutorService executor = Executors.newSingleThreadExecutor();
         executor.execute(() -> {
             try {
-                Result<List<SongModel>> result = new Result.Success<>(Query.getAllAudioFromDevice(this, null));
+                Result<List<SongModel>> result = new Result.Success<>(Query.getSongsFromFolder(this, folder));
                 callback.onComplete(result);
             } catch (Exception e) {
                 Result<List<SongModel>> errorResult = new Result.Error<>(e);
@@ -102,13 +100,7 @@ public class MainActivity extends AppCompatActivity {
             fragmentManager.beginTransaction()
                     .setReorderingAllowed(true)
                     .addToBackStack(null)
-                    .add(R.id.fragment_holder, fragment)
-                    .commit();
-        } else {
-            fragmentManager.beginTransaction()
-                    .setReorderingAllowed(true)
                     .replace(R.id.fragment_holder, fragment)
-                    .addToBackStack(null)
                     .commit();
         }
     }

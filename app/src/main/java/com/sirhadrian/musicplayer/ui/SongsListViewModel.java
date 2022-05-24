@@ -10,7 +10,7 @@ import java.util.List;
 
 public class SongsListViewModel extends ViewModel {
 
-    private MutableLiveData<List<SongModel>> mSongsList = new MutableLiveData<>();
+    private final MutableLiveData<List<SongModel>> mSongsList = new MutableLiveData<>();
 
     public LiveData<List<SongModel>> get_mSongsList() {
         return mSongsList;
@@ -18,5 +18,9 @@ public class SongsListViewModel extends ViewModel {
 
     public void set_mSongList(List<SongModel> songs){
         mSongsList.setValue(songs);
+    }
+
+    public void set_value_in_worker_thread(List<SongModel> songs){
+        mSongsList.postValue(songs);
     }
 }
