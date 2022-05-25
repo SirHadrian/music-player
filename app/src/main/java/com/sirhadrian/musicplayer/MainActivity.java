@@ -2,11 +2,11 @@ package com.sirhadrian.musicplayer;
 
 import android.net.Uri;
 import android.os.Bundle;
+import android.view.Menu;
 import android.view.View;
 
 import androidx.appcompat.app.AppCompatActivity;
 import androidx.appcompat.widget.Toolbar;
-import androidx.fragment.app.Fragment;
 import androidx.fragment.app.FragmentManager;
 import androidx.lifecycle.ViewModelProvider;
 
@@ -28,7 +28,6 @@ public class MainActivity extends AppCompatActivity {
 
     private Uri searchFolder;
 
-    private SettingsViewModel settingsViewModel;
     private SongsListViewModel songsListViewModel;
 
     private List<SongModel> mSongs;
@@ -43,10 +42,11 @@ public class MainActivity extends AppCompatActivity {
 
         songsListViewModel = new ViewModelProvider(this).get(SongsListViewModel.class);
 
-        settingsViewModel = new ViewModelProvider(this).get(SettingsViewModel.class);
+        SettingsViewModel settingsViewModel = new ViewModelProvider(this).get(SettingsViewModel.class);
         settingsViewModel.get_mDirPath().observe(this, s -> searchFolder = s);
 
         Toolbar toolbar = binding.myToolbar;
+        setSupportActionBar(toolbar);
         toolbar.setOnMenuItemClickListener(item -> {
             int actionId = item.getItemId();
 
@@ -63,6 +63,13 @@ public class MainActivity extends AppCompatActivity {
                         ((Result.Error<List<SongModel>>) result).exception.printStackTrace();
                     }
                 });
+            } else if (actionId == R.id.home) {
+                FragmentManager fragmentManager = getSupportFragmentManager();
+                if (fragmentManager.getBackStackEntryCount() > 0) {
+                    fragmentManager.popBackStackImmediate();
+                    return true;
+                }
+                return false;
             } else return false;
 
             return true;
@@ -91,14 +98,18 @@ public class MainActivity extends AppCompatActivity {
 
     private void openSettingsFragment() {
         FragmentManager fragmentManager = getSupportFragmentManager();
-        Fragment fragment = fragmentManager.findFragmentById(R.id.fragment_settings);
-        if (fragment == null) {
-            fragment = new SettingsFragment();
-            fragmentManager.beginTransaction()
-                    .setReorderingAllowed(true)
-                    .addToBackStack(null)
-                    .add(R.id.fragment_holder, fragment)
-                    .commit();
-        }
+        if (fragmentManager.getBackStackEntryCount() > 0) return;
+        fragmentManager.beginTransaction()
+                .setReorderingAllowed(true)
+                .addToBackStack(null)
+                .add(R.id.fragment_holder, new SettingsFragment())
+                .commit();
+    }
+
+
+    @Override
+    public boolean onCreateOptionsMenu(Menu menu) {
+        getMenuInflater().inflate(R.menu.top_app_bar, menu);
+        return true;
     }
 }

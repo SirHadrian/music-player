@@ -6,4 +6,5 @@
     <string name="scan">Scan</string>
     <string name="directory">Directory</string>
     <string name="get_dir_path">GET DIR PATH</string>
+    <string name="home">Home</string>
 </resources>
