@@ -1,6 +1,5 @@
 package com.sirhadrian.musicplayer.ui;
 
-import android.net.Uri;
 import android.os.Bundle;
 import android.provider.MediaStore;
 import android.util.Log;
@@ -21,7 +20,6 @@ import androidx.viewpager2.widget.ViewPager2;
 import com.sirhadrian.musicplayer.R;
 import com.sirhadrian.musicplayer.databinding.FragmentSongsListBinding;
 import com.sirhadrian.musicplayer.model.SongModel;
-import com.sirhadrian.musicplayer.settings.SettingsViewModel;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -32,14 +30,11 @@ public class SongsListFragment extends Fragment {
     private List<SongModel> mSongsList;
 
     private SharedDataViewModel mSharedData;
-    private SettingsViewModel mSettings;
     private SongsListViewModel mSongsListObserved;
 
     private RecyclerView mRecyclerView;
     private SongsAdapter mSongsAdapter;
     private final ViewPager2 viewPager2Activity;
-
-    private Uri searchFolder;
 
 
     public SongsListFragment(ViewPager2 viewPager) {
@@ -59,9 +54,6 @@ public class SongsListFragment extends Fragment {
         mSongsList = new ArrayList<>();
 
 
-        mSettings = new ViewModelProvider(requireActivity()).get(SettingsViewModel.class);
-        mSettings.get_mDirPath().observe(getViewLifecycleOwner(), s -> searchFolder = s);
-
         mRecyclerView = binding.fragmentSongsListRecyclerView;
         mRecyclerView.setLayoutManager(new LinearLayoutManager(getContext()));
 
@@ -77,16 +69,6 @@ public class SongsListFragment extends Fragment {
             mSongsList.addAll(songModels);
             mSongsAdapter.notifyDataSetChanged();
         });
-
-        //test
-
-
-
-        if (android.os.Build.VERSION.SDK_INT >= android.os.Build.VERSION_CODES.Q) {
-            Set<String> mediaVolumes = MediaStore.getExternalVolumeNames(requireActivity());
-
-            Log.d("vol", mediaVolumes.toString());
-        }
 
         return view;
     }

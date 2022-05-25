@@ -2,7 +2,6 @@ package com.sirhadrian.musicplayer;
 
 import android.net.Uri;
 import android.os.Bundle;
-import android.util.Log;
 import android.view.View;
 
 import androidx.appcompat.app.AppCompatActivity;
@@ -32,7 +31,7 @@ public class MainActivity extends AppCompatActivity {
     private SettingsViewModel settingsViewModel;
     private SongsListViewModel songsListViewModel;
 
-    private List<SongModel> temp;
+    private List<SongModel> mSongs;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -54,13 +53,12 @@ public class MainActivity extends AppCompatActivity {
             if (actionId == R.id.settings) {
                 openSettingsFragment();
             } else if (actionId == R.id.scan) {
-                assert searchFolder != null;
-                //songsListViewModel.set_mSongList(Query.getSongsFromFolder(this, searchFolder));
+                if (searchFolder == null) return false;
 
                 makeScanRequest(searchFolder, result -> {
                     if (result instanceof Result.Success) {
-                        temp = ((Result.Success<List<SongModel>>) result).get_Data();
-                        songsListViewModel.set_value_in_worker_thread(temp);
+                        mSongs = ((Result.Success<List<SongModel>>) result).get_Data();
+                        songsListViewModel.set_value_in_worker_thread(mSongs);
                     } else if (result instanceof Result.Error) {
                         ((Result.Error<List<SongModel>>) result).exception.printStackTrace();
                     }
@@ -71,10 +69,9 @@ public class MainActivity extends AppCompatActivity {
         });
 
         if (savedInstanceState == null) {
-            Fragment fragment = new ViewPagerFragment();
             getSupportFragmentManager().beginTransaction()
                     .setReorderingAllowed(true)
-                    .add(R.id.fragment_holder, fragment)
+                    .add(R.id.fragment_holder, new ViewPagerFragment())
                     .commit();
         }
     }
@@ -100,7 +97,7 @@ public class MainActivity extends AppCompatActivity {
             fragmentManager.beginTransaction()
                     .setReorderingAllowed(true)
                     .addToBackStack(null)
-                    .replace(R.id.fragment_holder, fragment)
+                    .add(R.id.fragment_holder, fragment)
                     .commit();
         }
     }
