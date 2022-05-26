@@ -15,7 +15,6 @@ import androidx.annotation.Nullable;
 import androidx.fragment.app.Fragment;
 import androidx.lifecycle.ViewModelProvider;
 
-import com.sirhadrian.musicplayer.MainActivity;
 import com.sirhadrian.musicplayer.databinding.FragmentSettingsBinding;
 
 import java.io.File;

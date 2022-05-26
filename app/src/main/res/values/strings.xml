@@ -22,4 +22,5 @@
     </string>
     <string name="attachment_summary_off">Only download attachments when manually requested</string>
     <string name="scan_button">scan-button</string>
+    <string name="dir">com.sirhadrian.music-player.dir</string>
 </resources>

@@ -3,10 +3,8 @@ package com.sirhadrian.musicplayer;
 import android.net.Uri;
 import android.os.Bundle;
 import android.view.Menu;
-import android.view.MenuItem;
 import android.view.View;
 
-import androidx.annotation.NonNull;
 import androidx.appcompat.app.ActionBar;
 import androidx.appcompat.app.AppCompatActivity;
 import androidx.appcompat.widget.Toolbar;
@@ -15,7 +13,6 @@ import androidx.lifecycle.ViewModelProvider;
 
 import com.sirhadrian.musicplayer.databinding.FragmentHolderBinding;
 import com.sirhadrian.musicplayer.model.SongModel;
-import com.sirhadrian.musicplayer.settings.SettingsFragment;
 import com.sirhadrian.musicplayer.settings.SettingsFragment2;
 import com.sirhadrian.musicplayer.settings.SettingsViewModel;
 import com.sirhadrian.musicplayer.ui.SongsListViewModel;

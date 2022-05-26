@@ -5,28 +5,21 @@ import android.media.MediaPlayer;
 import android.net.Uri;
 import android.os.Bundle;
 import android.view.LayoutInflater;
-import android.view.MenuItem;
 import android.view.View;
 import android.view.ViewGroup;
 import android.widget.TextView;
 
 import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
-import androidx.documentfile.provider.DocumentFile;
 import androidx.fragment.app.Fragment;
-import androidx.lifecycle.Observer;
 import androidx.lifecycle.ViewModelProvider;
 
-import com.sirhadrian.musicplayer.MainActivity;
 import com.sirhadrian.musicplayer.databinding.FragmentSongDetailBinding;
-import com.sirhadrian.musicplayer.model.SongModel;
 
-import java.io.File;
 import java.io.IOException;
 
 public class SongDetailFragment extends Fragment {
 
-    private SharedDataViewModel mSharedData;
     private TextView mSongDetailTitle;
     private MediaPlayer mPlayer;
 
@@ -52,7 +45,7 @@ public class SongDetailFragment extends Fragment {
                         .build()
         );
 
-        mSharedData = new ViewModelProvider(requireActivity()).get(SharedDataViewModel.class);
+        SharedDataViewModel mSharedData = new ViewModelProvider(requireActivity()).get(SharedDataViewModel.class);
         mSharedData.getPlayingNow().observe(getViewLifecycleOwner(), songModel -> {
 
             mSongDetailTitle.setText(songModel.get_mSongTitle());
