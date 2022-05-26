@@ -1,10 +1,8 @@
 package com.sirhadrian.musicplayer.ui;
 
+import android.annotation.SuppressLint;
 import android.os.Bundle;
-import android.provider.MediaStore;
-import android.util.Log;
 import android.view.LayoutInflater;
-import android.view.MenuItem;
 import android.view.View;
 import android.view.ViewGroup;
 import android.widget.TextView;
@@ -18,23 +16,19 @@ import androidx.recyclerview.widget.LinearLayoutManager;
 import androidx.recyclerview.widget.RecyclerView;
 import androidx.viewpager2.widget.ViewPager2;
 
-import com.sirhadrian.musicplayer.MainActivity;
 import com.sirhadrian.musicplayer.R;
 import com.sirhadrian.musicplayer.databinding.FragmentSongsListBinding;
 import com.sirhadrian.musicplayer.model.SongModel;
 
 import java.util.ArrayList;
 import java.util.List;
-import java.util.Set;
 
 public class SongsListFragment extends Fragment {
 
     private List<SongModel> mSongsList;
 
     private SharedDataViewModel mSharedData;
-    private SongsListViewModel mSongsListObserved;
 
-    private RecyclerView mRecyclerView;
     private SongsAdapter mSongsAdapter;
     private final ViewPager2 viewPager2Activity;
 
@@ -43,6 +37,7 @@ public class SongsListFragment extends Fragment {
         this.viewPager2Activity = viewPager;
     }
 
+    @SuppressLint("NotifyDataSetChanged")
     @Nullable
     @Override
     public View onCreateView(@NonNull LayoutInflater inflater, @Nullable ViewGroup container,
@@ -56,7 +51,7 @@ public class SongsListFragment extends Fragment {
         mSongsList = new ArrayList<>();
 
 
-        mRecyclerView = binding.fragmentSongsListRecyclerView;
+        RecyclerView mRecyclerView = binding.fragmentSongsListRecyclerView;
         mRecyclerView.setLayoutManager(new LinearLayoutManager(getContext()));
 
         mSongsAdapter = new SongsAdapter(mSongsList);
@@ -64,7 +59,7 @@ public class SongsListFragment extends Fragment {
 
 
         mSharedData = new ViewModelProvider(requireActivity()).get(SharedDataViewModel.class);
-        mSongsListObserved = new ViewModelProvider(requireActivity()).get(SongsListViewModel.class);
+        SongsListViewModel mSongsListObserved = new ViewModelProvider(requireActivity()).get(SongsListViewModel.class);
 
         mSongsListObserved.get_mSongsList().observe(getViewLifecycleOwner(), songModels -> {
             mSongsList.clear();
@@ -137,5 +132,4 @@ public class SongsListFragment extends Fragment {
             }
         }
     }
-
 }

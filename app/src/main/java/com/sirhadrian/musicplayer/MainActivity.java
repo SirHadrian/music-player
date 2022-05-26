@@ -3,8 +3,11 @@ package com.sirhadrian.musicplayer;
 import android.net.Uri;
 import android.os.Bundle;
 import android.view.Menu;
+import android.view.MenuItem;
 import android.view.View;
 
+import androidx.annotation.NonNull;
+import androidx.appcompat.app.ActionBar;
 import androidx.appcompat.app.AppCompatActivity;
 import androidx.appcompat.widget.Toolbar;
 import androidx.fragment.app.FragmentManager;
@@ -13,6 +16,7 @@ import androidx.lifecycle.ViewModelProvider;
 import com.sirhadrian.musicplayer.databinding.FragmentHolderBinding;
 import com.sirhadrian.musicplayer.model.SongModel;
 import com.sirhadrian.musicplayer.settings.SettingsFragment;
+import com.sirhadrian.musicplayer.settings.SettingsFragment2;
 import com.sirhadrian.musicplayer.settings.SettingsViewModel;
 import com.sirhadrian.musicplayer.ui.SongsListViewModel;
 import com.sirhadrian.musicplayer.ui.viewpager.ViewPagerFragment;
@@ -31,6 +35,7 @@ public class MainActivity extends AppCompatActivity {
     private SongsListViewModel songsListViewModel;
 
     private List<SongModel> mSongs;
+    ActionBar actionBar;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -47,6 +52,8 @@ public class MainActivity extends AppCompatActivity {
 
         Toolbar toolbar = binding.myToolbar;
         setSupportActionBar(toolbar);
+        actionBar = getSupportActionBar();
+
         toolbar.setOnMenuItemClickListener(item -> {
             int actionId = item.getItemId();
 
@@ -63,14 +70,15 @@ public class MainActivity extends AppCompatActivity {
                         ((Result.Error<List<SongModel>>) result).exception.printStackTrace();
                     }
                 });
-            } else if (actionId == R.id.home) {
+            }
+
+            /*else if (actionId == R.id.home) {
                 FragmentManager fragmentManager = getSupportFragmentManager();
                 if (fragmentManager.getBackStackEntryCount() > 0) {
                     fragmentManager.popBackStackImmediate();
                     return true;
                 }
-                return false;
-            } else return false;
+                return false;*/
 
             return true;
         });
@@ -102,7 +110,7 @@ public class MainActivity extends AppCompatActivity {
         fragmentManager.beginTransaction()
                 .setReorderingAllowed(true)
                 .addToBackStack(null)
-                .add(R.id.fragment_holder, new SettingsFragment())
+                .add(R.id.fragment_holder, new SettingsFragment2())
                 .commit();
     }
 
@@ -111,5 +119,27 @@ public class MainActivity extends AppCompatActivity {
     public boolean onCreateOptionsMenu(Menu menu) {
         getMenuInflater().inflate(R.menu.top_app_bar, menu);
         return true;
+    }
+
+
+    public void showUpButton() {
+        actionBar.setDisplayHomeAsUpEnabled(true);
+    }
+
+    public void hideUpButton() {
+        actionBar.setDisplayHomeAsUpEnabled(false);
+    }
+
+    @Override
+    public boolean onSupportNavigateUp() {
+        FragmentManager fragmentManager = getSupportFragmentManager();
+        if (fragmentManager.getBackStackEntryCount() > 0) {
+            fragmentManager.popBackStackImmediate();
+            hideUpButton();
+            return true;
+        } else {
+            super.onSupportNavigateUp();
+            return false;
+        }
     }
 }

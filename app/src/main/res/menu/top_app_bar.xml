@@ -21,11 +21,4 @@
         android:title="@string/scan"
         app:showAsAction="never" />
 
-    <item
-        android:id="@+id/home"
-
-        android:icon="@drawable/ic_baseline_home_24"
-        android:title="@string/home"
-        app:showAsAction="always" />
-
 </menu>

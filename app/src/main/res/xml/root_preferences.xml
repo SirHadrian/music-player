@@ -1,0 +1,16 @@
+<PreferenceScreen xmlns:app="http://schemas.android.com/apk/res-auto"
+    xmlns:android="http://schemas.android.com/apk/res/android">
+
+    <PreferenceCategory app:title="Scan">
+
+        <Preference
+            android:title="Scan directory"
+            android:key="@string/scan_button"
+            android:summary=""
+            />
+
+
+
+    </PreferenceCategory>
+
+</PreferenceScreen>
