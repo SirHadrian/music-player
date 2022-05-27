@@ -1,11 +1,16 @@
 package com.sirhadrian.musicplayer.settings;
 
+import static android.app.Activity.RESULT_OK;
+
 import android.content.Context;
+import android.content.Intent;
 import android.net.Uri;
 import android.os.Bundle;
+import android.os.Environment;
 
 import androidx.activity.result.ActivityResultLauncher;
 import androidx.activity.result.contract.ActivityResultContracts;
+import androidx.annotation.Nullable;
 import androidx.lifecycle.ViewModelProvider;
 import androidx.preference.Preference;
 import androidx.preference.PreferenceFragmentCompat;
@@ -24,40 +29,38 @@ import java.io.ObjectOutputStream;
 public class SettingsFragment2 extends PreferenceFragmentCompat {
 
     private final String mCacheFile = "resultObject";
+    private Preference button;
+    private SettingsViewModel settingsViewModel;
 
     @Override
     public void onCreatePreferences(Bundle savedInstanceState, String rootKey) {
         setPreferencesFromResource(R.xml.root_preferences, rootKey);
 
-        SettingsViewModel settingsViewModel = new ViewModelProvider(requireActivity()).get(SettingsViewModel.class);
-        Preference button = findPreference(getString(R.string.scan_button));
-
-        try {
-            File.createTempFile(mCacheFile, null, requireContext().getCacheDir());
-        } catch (IOException e) {
-            e.printStackTrace();
-        }
-        File cacheFile = new File(requireActivity().getCacheDir(), mCacheFile);
-
-        Uri res = readResultObjectFromFile(cacheFile);
-        if (res != null) {
-            settingsViewModel.set_mDirPath(res);
-        }
-
-        ActivityResultLauncher<Uri> pathLauncher = registerForActivityResult(
-                new ActivityResultContracts.OpenDocumentTree(),
-                result -> {
-                    settingsViewModel.set_mDirPath(result);
-                    writeResultObjectToFile(result, cacheFile);
-                }
-        );
-
+        settingsViewModel = new ViewModelProvider(requireActivity()).get(SettingsViewModel.class);
+        button = findPreference(getString(R.string.scan_button));
 
         assert button != null;
         button.setOnPreferenceClickListener(preference -> {
-            pathLauncher.launch(Uri.fromFile(new File("/storage")));
+            Intent intent = new Intent(Intent.ACTION_OPEN_DOCUMENT_TREE);
+            intent.addCategory(Intent.CATEGORY_DEFAULT);
+            String path = String.valueOf(Environment.getExternalStorageDirectory());
+            //intent.setDataAndType(Uri.parse(path), "*/*");
+            startActivityForResult(Intent.createChooser(intent, "Choose directory"), 999);
+
             return true;
         });
+    }
+
+    @Override
+    public void onActivityResult(int requestCode, int resultCode, @Nullable Intent data) {
+        if (requestCode == 999) {
+            if (resultCode == RESULT_OK) {
+                assert data != null;
+                Uri path = data.getData();
+                button.setSummary(path.toString());
+                settingsViewModel.set_mDirPath(path);
+            }
+        }
     }
 
     @Override
