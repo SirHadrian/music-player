@@ -6,10 +6,7 @@ import android.content.Context;
 import android.content.Intent;
 import android.net.Uri;
 import android.os.Bundle;
-import android.os.Environment;
 
-import androidx.activity.result.ActivityResultLauncher;
-import androidx.activity.result.contract.ActivityResultContracts;
 import androidx.annotation.Nullable;
 import androidx.lifecycle.ViewModelProvider;
 import androidx.preference.Preference;
@@ -29,6 +26,8 @@ import java.io.ObjectOutputStream;
 public class SettingsFragment2 extends PreferenceFragmentCompat {
 
     private final String mCacheFile = "resultObject";
+    private final int mRequestCodeOpenDir = 99919;
+
     private Preference button;
     private SettingsViewModel settingsViewModel;
 
@@ -43,9 +42,8 @@ public class SettingsFragment2 extends PreferenceFragmentCompat {
         button.setOnPreferenceClickListener(preference -> {
             Intent intent = new Intent(Intent.ACTION_OPEN_DOCUMENT_TREE);
             intent.addCategory(Intent.CATEGORY_DEFAULT);
-            String path = String.valueOf(Environment.getExternalStorageDirectory());
             //intent.setDataAndType(Uri.parse(path), "*/*");
-            startActivityForResult(Intent.createChooser(intent, "Choose directory"), 999);
+            startActivityForResult(Intent.createChooser(intent, "Choose directory"), mRequestCodeOpenDir);
 
             return true;
         });
@@ -53,13 +51,11 @@ public class SettingsFragment2 extends PreferenceFragmentCompat {
 
     @Override
     public void onActivityResult(int requestCode, int resultCode, @Nullable Intent data) {
-        if (requestCode == 999) {
-            if (resultCode == RESULT_OK) {
-                assert data != null;
-                Uri path = data.getData();
-                button.setSummary(path.toString());
-                settingsViewModel.set_mDirPath(path);
-            }
+        if (requestCode == mRequestCodeOpenDir && resultCode == RESULT_OK) {
+            assert data != null;
+            Uri path = data.getData();
+            button.setSummary(path.toString());
+            settingsViewModel.set_mDirPath(path);
         }
     }
 

@@ -4,7 +4,7 @@ import androidx.lifecycle.LiveData;
 import androidx.lifecycle.MutableLiveData;
 import androidx.lifecycle.ViewModel;
 
-import com.sirhadrian.musicplayer.model.SongModel;
+import com.sirhadrian.musicplayer.model.database.SongModel;
 
 import java.util.List;
 
@@ -16,11 +16,16 @@ public class SongsListViewModel extends ViewModel {
         return mSongsList;
     }
 
-    public void set_mSongList(List<SongModel> songs){
+    private void loadSongs(List<SongModel> songs) {
+        mSongsList.setValue(songs);
+
+    }
+
+    public void set_mSongList(List<SongModel> songs) {
         mSongsList.setValue(songs);
     }
 
-    public void set_value_in_worker_thread(List<SongModel> songs){
+    public void set_value_in_worker_thread(List<SongModel> songs) {
         mSongsList.postValue(songs);
     }
 }

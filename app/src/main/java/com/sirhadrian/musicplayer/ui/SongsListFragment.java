@@ -18,7 +18,7 @@ import androidx.viewpager2.widget.ViewPager2;
 
 import com.sirhadrian.musicplayer.R;
 import com.sirhadrian.musicplayer.databinding.FragmentSongsListBinding;
-import com.sirhadrian.musicplayer.model.SongModel;
+import com.sirhadrian.musicplayer.model.database.SongModel;
 
 import java.util.ArrayList;
 import java.util.List;

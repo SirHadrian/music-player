@@ -50,14 +50,14 @@ public class SongDetailFragment extends Fragment {
 
             mSongDetailTitle.setText(songModel.get_mSongTitle());
 
-            Uri uri = songModel.get_mSongUri();
+            Uri uri = Uri.parse(songModel.get_mSongUri());
 
             if (mPlayer.isPlaying()) {
                 mPlayer.stop();
             }
             mPlayer.reset();
             try {
-                mPlayer.setDataSource(getContext(), uri);
+                mPlayer.setDataSource(requireContext(), uri);
                 mPlayer.prepare();
                 mPlayer.start();
             } catch (IOException e) {

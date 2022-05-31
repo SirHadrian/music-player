@@ -10,7 +10,7 @@ import android.util.Log;
 
 import androidx.documentfile.provider.DocumentFile;
 
-import com.sirhadrian.musicplayer.model.SongModel;
+import com.sirhadrian.musicplayer.model.database.SongModel;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -28,7 +28,7 @@ public class Query {
         DocumentFile[] filesInDir = dir.listFiles();
 
         for (DocumentFile file : filesInDir) {
-            songs.add(new SongModel(file.getName(), file.getUri()));
+            songs.add(new SongModel(file.getName(), file.getUri().toString()));
         }
 
         Log.d("files", songs.toString());
@@ -36,10 +36,22 @@ public class Query {
         return songs;
     }
 
+    private static String getRealPathFromURI(final Context context, Uri contentUri) {
+        String[] proj = {MediaStore.Images.Media.DATA};
+        try (Cursor cursor = context.getApplicationContext().getContentResolver().query(contentUri, proj, null, null, null)) {
+            if (cursor == null) {
+                return contentUri.getPath();
+            }
+            int column_index = cursor.getColumnIndexOrThrow(MediaStore.Images.Media.DATA);
+            cursor.moveToFirst();
+            return cursor.getString(column_index);
+        }
+    }
+
 
     public static List<SongModel> getAllAudioFromDevice(final Context context, Uri folderName) {
         List<SongModel> songs = new ArrayList<>();
-        //String testFolder="/storage/44A6-B704/Documents/C_E_M";
+        String testFolder="/storage/44A6-B704/Documents/C_E_M";
 
         Uri collection;
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.Q) {
@@ -60,7 +72,7 @@ public class Query {
         }
 
         try (Cursor cursor = context.getApplicationContext().getContentResolver().query(
-                folderName,
+                collection,
                 projection,
                 selection,
                 selectionArgs,
@@ -82,7 +94,7 @@ public class Query {
                 assert contentUri != null;
                 // Stores column values and the contentUri in a local object
                 // that represents the media file.
-                songs.add(new SongModel(name, contentUri));
+                songs.add(new SongModel(name, contentUri.toString()));
             }
         }
         return songs;
