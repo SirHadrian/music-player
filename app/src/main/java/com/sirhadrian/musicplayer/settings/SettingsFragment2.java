@@ -6,6 +6,7 @@ import android.content.Context;
 import android.content.Intent;
 import android.net.Uri;
 import android.os.Bundle;
+import android.util.Log;
 
 import androidx.annotation.Nullable;
 import androidx.lifecycle.ViewModelProvider;
@@ -56,6 +57,7 @@ public class SettingsFragment2 extends PreferenceFragmentCompat {
             Uri path = data.getData();
             button.setSummary(path.toString());
             settingsViewModel.set_mDirPath(path);
+            Log.d("geturi", path + "   --- " + path.getPath());
         }
     }
 

@@ -72,8 +72,25 @@ public class SongDetailFragment extends Fragment {
 
 
     @Override
-    public void onStop() {
-        super.onStop();
+    public void onResume() {
+        super.onResume();
+        if (!mPlayer.isPlaying()) {
+            mPlayer.start();
+        }
+
+    }
+
+    @Override
+    public void onPause() {
+        super.onPause();
+        if (mPlayer.isPlaying()) {
+            mPlayer.pause();
+        }
+    }
+
+    @Override
+    public void onDestroy() {
+        super.onDestroy();
         if (mPlayer != null) {
             mPlayer.release();
         }

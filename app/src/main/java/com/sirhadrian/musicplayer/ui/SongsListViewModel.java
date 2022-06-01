@@ -16,13 +16,9 @@ public class SongsListViewModel extends ViewModel {
         return mSongsList;
     }
 
-    private void loadSongs(List<SongModel> songs) {
+    public void loadSongs(List<SongModel> songs) {
         mSongsList.setValue(songs);
 
-    }
-
-    public void set_mSongList(List<SongModel> songs) {
-        mSongsList.setValue(songs);
     }
 
     public void set_value_in_worker_thread(List<SongModel> songs) {

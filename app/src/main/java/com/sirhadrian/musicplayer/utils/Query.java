@@ -24,7 +24,10 @@ public class Query {
         List<SongModel> songs = new ArrayList<>();
 
         DocumentFile dir = DocumentFile.fromTreeUri(context, folder);
-        assert dir != null;
+
+        //temp
+        Log.d("geturi", dir.getUri() + " ---- " + dir.getUri().getPath());
+
         DocumentFile[] filesInDir = dir.listFiles();
 
         for (DocumentFile file : filesInDir) {
@@ -48,10 +51,64 @@ public class Query {
         }
     }
 
+    public static List<SongModel> getAllAudioFromDeviceV2(final Context context) {
+        List<SongModel> songs = new ArrayList<>();
+
+        Uri collection;
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.Q) {
+            collection = MediaStore.Audio.Media.getContentUri(MediaStore.VOLUME_EXTERNAL);
+        } else {
+            collection = MediaStore.Audio.Media.EXTERNAL_CONTENT_URI;
+        }
+
+        //projection
+        String[] projection = new String[]{
+                MediaStore.Audio.Media._ID,
+                MediaStore.Audio.Media.DISPLAY_NAME,
+                MediaStore.Audio.Media.DURATION,
+                MediaStore.Audio.Media.SIZE,
+                MediaStore.Audio.Media.ALBUM_ID,
+        };
+
+
+        //Querying
+        try (Cursor cursor = context.getContentResolver().query(collection, projection, null, null, null)) {
+
+            //cache the cursor indices
+            int idColumn = cursor.getColumnIndexOrThrow(MediaStore.Audio.Media._ID);
+            int nameColumn = cursor.getColumnIndexOrThrow(MediaStore.Audio.Media.DISPLAY_NAME);
+            int durationColumn = cursor.getColumnIndexOrThrow(MediaStore.Audio.Media.DURATION);
+            int sizeColumn = cursor.getColumnIndexOrThrow(MediaStore.Audio.Media.SIZE);
+            int albumIdColumn = cursor.getColumnIndexOrThrow(MediaStore.Audio.Media.ALBUM_ID);
+
+            //getting the values
+            while (cursor.moveToNext()) {
+                //get values of columns for a give audio file
+                long id = cursor.getLong(idColumn);
+                String name = cursor.getString(nameColumn);
+                int duration = cursor.getInt(durationColumn);
+                int size = cursor.getInt(sizeColumn);
+                long albumId = cursor.getLong(albumIdColumn);
+
+                //song uri
+                Uri uri = ContentUris.withAppendedId(MediaStore.Audio.Media.EXTERNAL_CONTENT_URI, id);
+
+                //album art uri
+                //Uri albumartUri = ContentUris.withAppendedId(Uri.parse("content://media/external/audio/albumart"), albumId);
+
+                //remove .mp3 extension on song's name
+                name = name.substring(0, name.lastIndexOf("."));
+
+                //song item
+                songs.add(new SongModel(name, uri.toString()));
+            }
+        }
+        return songs;
+    }
 
     public static List<SongModel> getAllAudioFromDevice(final Context context, Uri folderName) {
         List<SongModel> songs = new ArrayList<>();
-        String testFolder="/storage/44A6-B704/Documents/C_E_M";
+        String testFolder = "/storage/44A6-B704/Documents/C_E_M";
 
         Uri collection;
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.Q) {
@@ -74,7 +131,7 @@ public class Query {
         try (Cursor cursor = context.getApplicationContext().getContentResolver().query(
                 collection,
                 projection,
-                selection,
+                null,
                 selectionArgs,
                 null
         )) {

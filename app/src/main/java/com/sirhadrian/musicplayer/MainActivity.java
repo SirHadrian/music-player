@@ -1,25 +1,28 @@
 package com.sirhadrian.musicplayer;
 
+import android.Manifest;
 import android.content.Intent;
-import android.content.SharedPreferences;
+import android.content.pm.PackageManager;
 import android.net.Uri;
+import android.os.Build;
 import android.os.Bundle;
 import android.view.Menu;
 import android.view.View;
+import android.widget.Toast;
 
+import androidx.activity.result.ActivityResultLauncher;
+import androidx.activity.result.contract.ActivityResultContracts;
 import androidx.annotation.Nullable;
 import androidx.appcompat.app.ActionBar;
+import androidx.appcompat.app.AlertDialog;
 import androidx.appcompat.app.AppCompatActivity;
 import androidx.appcompat.widget.Toolbar;
+import androidx.core.content.ContextCompat;
 import androidx.fragment.app.FragmentManager;
 import androidx.lifecycle.ViewModelProvider;
 
-import com.google.gson.Gson;
-import com.google.gson.reflect.TypeToken;
 import com.sirhadrian.musicplayer.databinding.FragmentHolderBinding;
-import com.sirhadrian.musicplayer.model.database.SongDao;
 import com.sirhadrian.musicplayer.model.database.SongModel;
-import com.sirhadrian.musicplayer.model.database.SongsDatabase;
 import com.sirhadrian.musicplayer.settings.SettingsFragment2;
 import com.sirhadrian.musicplayer.settings.SettingsViewModel;
 import com.sirhadrian.musicplayer.ui.SongsListViewModel;
@@ -28,8 +31,6 @@ import com.sirhadrian.musicplayer.utils.Query;
 import com.sirhadrian.musicplayer.utils.Result;
 import com.sirhadrian.musicplayer.utils.ResultCallback;
 
-import java.lang.reflect.Type;
-import java.util.ArrayList;
 import java.util.List;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
@@ -42,8 +43,7 @@ public class MainActivity extends AppCompatActivity {
 
     private ActionBar actionBar;
 
-    private SongDao songDao;
-    private SongsDatabase database;
+    private ActivityResultLauncher<String> permission;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -55,20 +55,16 @@ public class MainActivity extends AppCompatActivity {
 
         songsListViewModel = new ViewModelProvider(this).get(SongsListViewModel.class);
 
-        //SharedPreferences preferences = getSharedPreferences(getString(R.string.preference_file), Context.MODE_PRIVATE);
-        //mSongs = readCacheSongs(preferences);
+        permission = registerForActivityResult(new ActivityResultContracts.RequestPermission(), result -> {
+            if (result) {
+                songsListViewModel.loadSongs(Query.getAllAudioFromDevice(this, null));
+            } else {
+                respondOnUserPermissionActs();
+            }
+        });
 
-        //test
-        /*
-        database = Room.databaseBuilder(
-                        getApplicationContext(),
-                        SongsDatabase.class,
-                        "db-songs")
-                .allowMainThreadQueries()
-                .build();
-        songDao = database.songDao();
-        songsListViewModel.set_mSongList(songDao.getAll());
-*/
+        permission.launch(Manifest.permission.WRITE_EXTERNAL_STORAGE);
+
 
         SettingsViewModel settingsViewModel = new ViewModelProvider(this).get(SettingsViewModel.class);
         settingsViewModel.get_mDirPath().observe(this, s -> searchFolder = s);
@@ -96,15 +92,6 @@ public class MainActivity extends AppCompatActivity {
                     }
                 });
             }
-
-            /*else if (actionId == R.id.home) {
-                FragmentManager fragmentManager = getSupportFragmentManager();
-                if (fragmentManager.getBackStackEntryCount() > 0) {
-                    fragmentManager.popBackStackImmediate();
-                    return true;
-                }
-                return false;*/
-
             return true;
         });
 
@@ -113,6 +100,33 @@ public class MainActivity extends AppCompatActivity {
                     .setReorderingAllowed(true)
                     .add(R.id.fragment_holder, new ViewPagerFragment())
                     .commit();
+        }
+    }
+
+    private void respondOnUserPermissionActs() {
+        //user response
+        if (ContextCompat.checkSelfPermission(this, Manifest.permission.WRITE_EXTERNAL_STORAGE) == PackageManager.PERMISSION_GRANTED) {
+            //permission granted
+            Toast.makeText(this, "Permission Granted", Toast.LENGTH_LONG).show();
+        } else if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.M) {
+            if (shouldShowRequestPermissionRationale(Manifest.permission.WRITE_EXTERNAL_STORAGE)) {
+                //show UI for the user explaining why we need this permission
+                //alert dialog
+                new AlertDialog.Builder(this)
+                        .setTitle("Requesting Permission")
+                        .setMessage("Allow the app to fetch songs from your device")
+                        .setPositiveButton("Allow ", (dialogInterface, i) -> {
+                            //request permission again
+                            permission.launch(Manifest.permission.WRITE_EXTERNAL_STORAGE);
+                        })
+                        .setNegativeButton("Don't Allow", (dialogInterface, i) -> {
+                            Toast.makeText(getApplicationContext(), "Permission denied", Toast.LENGTH_LONG).show();
+                            dialogInterface.dismiss();
+                        })
+                        .show();
+            } else {
+                Toast.makeText(this, "Permission denied", Toast.LENGTH_LONG).show();
+            }
         }
     }
 
@@ -138,27 +152,6 @@ public class MainActivity extends AppCompatActivity {
                 .add(R.id.fragment_holder, new SettingsFragment2())
                 .commit();
     }
-
-    private void writeCacheSongs(List<SongModel> songs, SharedPreferences preferences) {
-        SharedPreferences.Editor editor = preferences.edit();
-        Gson gson = new Gson();
-        String jsonString = gson.toJson(songs);
-
-        editor.putString(getString(R.string.songs_key_serial), jsonString);
-        editor.apply();
-    }
-
-    private ArrayList<SongModel> readCacheSongs(SharedPreferences preferences) {
-        Gson gson = new Gson();
-        String jsonString = preferences.getString(getString(R.string.songs_key_serial), null);
-        if (jsonString != null) {
-            Type collectionType = new TypeToken<ArrayList<SongModel>>() {
-            }.getType();
-            return gson.fromJson(jsonString, collectionType);
-        }
-        return null;
-    }
-
 
     @Override
     public boolean onCreateOptionsMenu(Menu menu) {
