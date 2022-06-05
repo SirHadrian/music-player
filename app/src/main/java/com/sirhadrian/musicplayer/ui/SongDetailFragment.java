@@ -1,5 +1,6 @@
 package com.sirhadrian.musicplayer.ui;
 
+import android.app.Notification;
 import android.app.NotificationChannel;
 import android.app.NotificationManager;
 import android.content.ComponentName;
@@ -49,30 +50,13 @@ public class SongDetailFragment extends Fragment implements ServiceConnection {
         FragmentSongDetailBinding binding = FragmentSongDetailBinding.inflate(inflater, container,
                 false);
         View view = binding.getRoot();
+        createNotificationChannel();
         mSongDetailTitle = binding.songDetailTextView;
         mSharedData = new ViewModelProvider(requireActivity()).get(SharedDataViewModel.class);
 
         mSharedData.getPlayingNow().observe(getViewLifecycleOwner(), songModel -> {
             mPlayingNow = songModel;
             playSong();
-        });
-
-        mSongDetailTitle.setOnClickListener(new View.OnClickListener() {
-            @Override
-            public void onClick(View view) {
-                createNotificationChannel();
-
-                NotificationCompat.Builder builder = new NotificationCompat.Builder(requireActivity(), CHANNEL_ID)
-                        .setSmallIcon(R.drawable.ic_music_note)
-                        .setContentTitle(mPlayingNow.get_mSongTitle())
-                        .setContentText(mPlayingNow.get_mSongUri())
-                        .setPriority(NotificationCompat.PRIORITY_DEFAULT);
-
-                NotificationManagerCompat notificationManager = NotificationManagerCompat.from(requireActivity());
-
-                // notificationId is a unique int for each notification that you must define
-                notificationManager.notify(1234, builder.build());
-            }
         });
 
         return view;
@@ -106,6 +90,19 @@ public class SongDetailFragment extends Fragment implements ServiceConnection {
             NotificationManager notificationManager = requireActivity().getSystemService(NotificationManager.class);
             notificationManager.createNotificationChannel(channel);
         }
+    }
+
+    private void createNotification(String title, String content) {
+        NotificationCompat.Builder builder = new NotificationCompat.Builder(requireActivity(), CHANNEL_ID)
+                .setSmallIcon(R.drawable.ic_music_note)
+                .setContentTitle(title)
+                .setContentText(content)
+                .setPriority(NotificationCompat.PRIORITY_DEFAULT);
+
+        NotificationManagerCompat notificationManager = NotificationManagerCompat.from(requireActivity());
+
+        // notificationId is a unique int for each notification that you must define
+        notificationManager.notify(1234, builder.build());
     }
 
 
@@ -147,6 +144,7 @@ public class SongDetailFragment extends Fragment implements ServiceConnection {
     private void playSong() {
         if (mBound && mPlayingNow != null) {
             mSongDetailTitle.setText(mPlayingNow.get_mSongTitle());
+            createNotification(mPlayingNow.get_mSongTitle(), mPlayingNow.get_mSongUri());
 
             if (mService.isPlaying()) {
                 mService.stop();
