@@ -57,13 +57,23 @@ public class PlaySongs extends Service {
     public void stop() {
         if (isPlaying()) {
             mPlayer.stop();
+        }
+    }
 
+    public void start(){
+        if (!mPlayer.isPlaying())
+            mPlayer.start();
+    }
+
+    public void pause(){
+        if (mPlayer.isPlaying()) {
+            mPlayer.pause();
         }
     }
 
     public boolean isPlaying() {
         if (mPlayer == null)
-            initMediaPlayer();
+            return false;
         return mPlayer.isPlaying();
     }
 

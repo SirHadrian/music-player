@@ -1,15 +1,18 @@
 package com.sirhadrian.musicplayer.ui;
 
-import android.app.Notification;
 import android.app.NotificationChannel;
 import android.app.NotificationManager;
+import android.app.PendingIntent;
+import android.content.BroadcastReceiver;
 import android.content.ComponentName;
 import android.content.Context;
 import android.content.Intent;
+import android.content.IntentFilter;
 import android.content.ServiceConnection;
 import android.os.Build;
 import android.os.Bundle;
 import android.os.IBinder;
+import android.util.Log;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
@@ -25,18 +28,26 @@ import androidx.lifecycle.ViewModelProvider;
 import com.sirhadrian.musicplayer.R;
 import com.sirhadrian.musicplayer.databinding.FragmentSongDetailBinding;
 import com.sirhadrian.musicplayer.model.database.SongModel;
+import com.sirhadrian.musicplayer.services.NotificationActionService;
+import com.sirhadrian.musicplayer.services.OnClearFromRecentService;
 import com.sirhadrian.musicplayer.services.PlaySongs;
+import com.sirhadrian.musicplayer.utils.Playable;
 
-public class SongDetailFragment extends Fragment implements ServiceConnection {
+public class SongDetailFragment extends Fragment implements ServiceConnection, Playable {
 
     private TextView mSongDetailTitle;
     private PlaySongs mService;
     private boolean mBound = false;
-    private SharedDataViewModel mSharedData;
 
     private SongModel mPlayingNow;
 
     public static final String CHANNEL_ID = "CHANNEL_1";
+    public static final String ACTION_PREVIOUS = "action-previous";
+    public static final String ACTION_PLAY = "action-play";
+    public static final String ACTION_NEXT = "action-next";
+
+    boolean isPlaying = false;
+
 
     public SongDetailFragment() {
 
@@ -50,9 +61,40 @@ public class SongDetailFragment extends Fragment implements ServiceConnection {
         FragmentSongDetailBinding binding = FragmentSongDetailBinding.inflate(inflater, container,
                 false);
         View view = binding.getRoot();
-        createNotificationChannel();
+
+
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
+            createNotificationChannel();
+
+            BroadcastReceiver broadcastReceiver = new BroadcastReceiver() {
+                @Override
+                public void onReceive(Context context, Intent intent) {
+                    String action = intent.getExtras().getString("action-name");
+
+                    switch (action) {
+                        case ACTION_PREVIOUS:
+                            onTrackPrevious();
+                            break;
+                        case ACTION_PLAY:
+                            if (isPlaying) {
+                                onTrackPause();
+                            } else {
+                                onTrackPlay();
+                            }
+                            break;
+                        case ACTION_NEXT:
+                            onTrackNext();
+                            break;
+                    }
+                }
+            };
+
+            requireActivity().registerReceiver(broadcastReceiver, new IntentFilter("SONG"));
+            requireActivity().startService(new Intent(requireActivity().getBaseContext(), OnClearFromRecentService.class));
+        }
+
         mSongDetailTitle = binding.songDetailTextView;
-        mSharedData = new ViewModelProvider(requireActivity()).get(SharedDataViewModel.class);
+        SharedDataViewModel mSharedData = new ViewModelProvider(requireActivity()).get(SharedDataViewModel.class);
 
         mSharedData.getPlayingNow().observe(getViewLifecycleOwner(), songModel -> {
             mPlayingNow = songModel;
@@ -60,6 +102,30 @@ public class SongDetailFragment extends Fragment implements ServiceConnection {
         });
 
         return view;
+    }
+
+    @Override
+    public void onTrackPrevious() {
+        Log.e("buttons", "prev pressed");
+    }
+
+    @Override
+    public void onTrackPlay() {
+        Log.e("buttons", "play pressed");
+        mService.start();
+        isPlaying=true;
+    }
+
+    @Override
+    public void onTrackPause() {
+        Log.e("buttons", "pause pressed");
+        mService.pause();
+        isPlaying=false;
+    }
+
+    @Override
+    public void onTrackNext() {
+        Log.e("buttons", "next pressed");
     }
 
     @Override
@@ -92,17 +158,50 @@ public class SongDetailFragment extends Fragment implements ServiceConnection {
         }
     }
 
-    private void createNotification(String title, String content) {
-        NotificationCompat.Builder builder = new NotificationCompat.Builder(requireActivity(), CHANNEL_ID)
-                .setSmallIcon(R.drawable.ic_music_note)
-                .setContentTitle(title)
-                .setContentText(content)
-                .setPriority(NotificationCompat.PRIORITY_DEFAULT);
+    private void createNotification(Context context, String title, String content) {
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
+            //MediaSessionCompat mediaSession = new MediaSessionCompat(context, "tag");
 
-        NotificationManagerCompat notificationManager = NotificationManagerCompat.from(requireActivity());
+            PendingIntent pendingIntentPrevious;
+            Intent intentPrevious = new Intent(context, NotificationActionService.class)
+                    .setAction(ACTION_PREVIOUS);
+            pendingIntentPrevious = PendingIntent.getBroadcast(context, 0,
+                    intentPrevious, PendingIntent.FLAG_UPDATE_CURRENT);
 
-        // notificationId is a unique int for each notification that you must define
-        notificationManager.notify(1234, builder.build());
+            Intent intentPlay = new Intent(context, NotificationActionService.class)
+                    .setAction(ACTION_PLAY);
+            PendingIntent pendingIntentPlay = PendingIntent.getBroadcast(context, 0,
+                    intentPlay, PendingIntent.FLAG_UPDATE_CURRENT);
+
+            PendingIntent pendingIntentNext;
+            Intent intentNext = new Intent(context, NotificationActionService.class)
+                    .setAction(ACTION_NEXT);
+            pendingIntentNext = PendingIntent.getBroadcast(context, 0,
+                    intentNext, PendingIntent.FLAG_UPDATE_CURRENT);
+
+            NotificationCompat.Builder builder = new NotificationCompat.Builder(requireActivity(), CHANNEL_ID)
+                    .setSmallIcon(R.drawable.ic_music_note)
+                    .setVisibility(NotificationCompat.VISIBILITY_PUBLIC)
+
+                    .addAction(R.drawable.ic_skip_previous_black_24dp, "Previous", pendingIntentPrevious) // #0
+                    .addAction(R.drawable.ic_pause_black_24dp, "Pause", pendingIntentPlay)  // #1
+                    .addAction(R.drawable.ic_skip_next_black_24dp, "Next", pendingIntentNext)     // #2
+
+                    .setStyle(new androidx.media.app.NotificationCompat.MediaStyle()
+                                    .setShowActionsInCompactView(0, 1, 2)
+                            //.setMediaSession(mediaSession.getSessionToken())
+                    )
+
+                    .setContentTitle(title)
+                    .setContentText(content)
+
+                    .setPriority(NotificationCompat.PRIORITY_DEFAULT);
+
+            NotificationManagerCompat notificationManager = NotificationManagerCompat.from(requireActivity());
+
+            // notificationId is a unique int for each notification that you must define
+            notificationManager.notify(1234, builder.build());
+        }
     }
 
 
@@ -144,7 +243,9 @@ public class SongDetailFragment extends Fragment implements ServiceConnection {
     private void playSong() {
         if (mBound && mPlayingNow != null) {
             mSongDetailTitle.setText(mPlayingNow.get_mSongTitle());
-            createNotification(mPlayingNow.get_mSongTitle(), mPlayingNow.get_mSongUri());
+            createNotification(requireContext(), mPlayingNow.get_mSongTitle(), mPlayingNow.get_mSongUri());
+            isPlaying=true;
+            //createNotification(requireContext(), mPlayingNow);
 
             if (mService.isPlaying()) {
                 mService.stop();
