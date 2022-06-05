@@ -26,5 +26,7 @@
     <string name="title_activity_settings">SettingsActivity</string>
     <string name="preference_key" >com.sirhadrian.music-player.key</string>
     <string name="songs_key_serial">com.sirhadrian.music-player.songs</string>
+    <string name="channel_name">notifiychanngel</string>
+    <string name="channel_description">music notifffication</string>
 
 </resources>
