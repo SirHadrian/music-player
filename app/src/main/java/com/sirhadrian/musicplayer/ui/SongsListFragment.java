@@ -10,6 +10,7 @@ import android.widget.Toast;
 
 import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
+import androidx.constraintlayout.widget.ConstraintLayout;
 import androidx.fragment.app.Fragment;
 import androidx.lifecycle.ViewModelProvider;
 import androidx.recyclerview.widget.LinearLayoutManager;
@@ -81,7 +82,7 @@ public class SongsListFragment extends Fragment {
         @NonNull
         @Override
         public SongHolder onCreateViewHolder(@NonNull ViewGroup parent, int viewType) {
-            View view = LayoutInflater.from(getContext()).inflate(R.layout.song_item,
+            View view = LayoutInflater.from(getContext()).inflate(R.layout.recyclerview_item,
                     parent, false);
             return new SongHolder(view);
         }
@@ -92,6 +93,13 @@ public class SongsListFragment extends Fragment {
             holder.get_mSongModel().set_mSongUri(mSongsTitles.get(position).get_mSongUri());
 
             holder.get_mSongTitle().setText(mSongsTitles.get(position).get_mSongTitle());
+
+            if (position % 2 == 0) {
+                holder.get_mRowLayout().setBackgroundColor(getResources().getColor(R.color.bg_dark));
+            }else
+            {
+                holder.get_mRowLayout().setBackgroundColor(getResources().getColor(R.color.bg_light));
+            }
         }
 
         @Override
@@ -103,11 +111,14 @@ public class SongsListFragment extends Fragment {
         private class SongHolder extends RecyclerView.ViewHolder implements View.OnClickListener {
             private final TextView mSongTitleTextView;
             private SongModel mSongModel;
+            private ConstraintLayout mRowLayout;
 
             public SongHolder(@NonNull View itemView) {
                 super(itemView);
                 mSongTitleTextView = itemView.findViewById(R.id.songTitle);
+                mRowLayout = itemView.findViewById(R.id.row_constraint);
                 mSongTitleTextView.setOnClickListener(this);
+                mSongTitleTextView.setSelected(true);
             }
 
             public SongModel get_mSongModel() {
@@ -119,6 +130,10 @@ public class SongsListFragment extends Fragment {
 
             public TextView get_mSongTitle() {
                 return mSongTitleTextView;
+            }
+
+            public ConstraintLayout get_mRowLayout() {
+                return mRowLayout;
             }
 
             @Override
