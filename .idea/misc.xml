@@ -7,7 +7,9 @@
         <entry key="app/src/main/res/drawable/ic_baseline_home_24.xml" value="0.2975" />
         <entry key="app/src/main/res/drawable/ic_baseline_search_24.xml" value="0.328" />
         <entry key="app/src/main/res/drawable/ic_baseline_settings_24.xml" value="0.1875" />
+        <entry key="app/src/main/res/drawable/ic_music_note.xml" value="0.2985" />
         <entry key="app/src/main/res/drawable/ic_search_24dp.xml" value="0.328" />
+        <entry key="app/src/main/res/drawable/recyclerview_item_bg.xml" value="0.25" />
         <entry key="app/src/main/res/layout/activity_main.xml" value="0.33697916666666666" />
         <entry key="app/src/main/res/layout/activity_settings.xml" value="0.35260416666666666" />
         <entry key="app/src/main/res/layout/fragment_holder.xml" value="0.35260416666666666" />
@@ -15,9 +17,12 @@
         <entry key="app/src/main/res/layout/fragment_song_detail.xml" value="0.3515625" />
         <entry key="app/src/main/res/layout/fragment_songs_list.xml" value="0.33" />
         <entry key="app/src/main/res/layout/fragment_viewpager.xml" value="0.3515625" />
+        <entry key="app/src/main/res/layout/recyclerview_item.xml" value="0.67" />
         <entry key="app/src/main/res/layout/settings_activity.xml" value="0.35260416666666666" />
         <entry key="app/src/main/res/layout/song_item.xml" value="0.33" />
         <entry key="app/src/main/res/menu/top_app_bar.xml" value="0.33" />
+        <entry key="app/src/main/res/mipmap-anydpi-v26/ic_launcher.xml" value="0.274" />
+        <entry key="app/src/main/res/mipmap-anydpi-v26/ic_launcher_round.xml" value="0.274" />
         <entry key="app/src/main/res/xml/root_preferences.xml" value="0.35260416666666666" />
       </map>
     </option>

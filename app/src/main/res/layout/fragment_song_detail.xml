@@ -1,18 +1,106 @@
 <?xml version="1.0" encoding="utf-8"?>
-<androidx.constraintlayout.widget.ConstraintLayout xmlns:android="http://schemas.android.com/apk/res/android"
+<RelativeLayout xmlns:android="http://schemas.android.com/apk/res/android"
     xmlns:app="http://schemas.android.com/apk/res-auto"
     xmlns:tools="http://schemas.android.com/tools"
     android:layout_width="match_parent"
-    android:layout_height="match_parent">
+    android:layout_height="match_parent"
+    android:background="@color/bg_dark"
+    tools:context=".MainActivity">
 
     <TextView
-        android:id="@+id/songDetailTextView"
-        android:layout_width="wrap_content"
+        android:layout_width="match_parent"
         android:layout_height="wrap_content"
-        android:hint="Song Detail"
-        android:textSize="36sp"
-        app:layout_constraintBottom_toBottomOf="parent"
-        app:layout_constraintEnd_toEndOf="parent"
-        app:layout_constraintStart_toStartOf="parent"
-        app:layout_constraintTop_toTopOf="parent" />
-</androidx.constraintlayout.widget.ConstraintLayout>
+        android:id="@+id/song_title"
+        android:gravity="center"
+
+        android:hint="@string/song_title_here"
+        android:singleLine="true"
+        android:ellipsize="marquee"
+        android:textColor="@color/white"
+        android:textSize="20sp"
+        android:layout_margin="20dp"
+        android:padding="20dp"
+        />
+
+    <ImageView
+        android:id="@+id/song_art"
+        android:layout_width="240dp"
+        android:layout_height="240dp"
+        android:layout_above="@id/controls"
+        android:layout_centerHorizontal="true"
+        android:contentDescription="@string/art_place_holder"
+        android:padding="10dp"
+        android:src="@drawable/music_icon_big" />
+
+    <RelativeLayout
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:layout_alignParentBottom="true"
+        android:id="@+id/controls"
+        android:padding="40dp">
+
+        <SeekBar
+            android:id="@+id/seek_bar"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_margin="10dp"
+            android:backgroundTint="@color/white" />
+
+        <TextView
+            android:id="@+id/current_time"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_below="@id/seek_bar"
+            android:layout_alignParentStart="true"
+            android:layout_marginStart="20dp"
+            android:layout_marginTop="20dp"
+            android:layout_marginEnd="20dp"
+            android:layout_marginBottom="20dp"
+            android:text="@string/start_position"
+            android:textColor="@color/white" />
+        <TextView
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_below="@id/seek_bar"
+            android:id="@+id/total_time"
+            android:text="@string/start_position"
+            android:layout_alignParentEnd="true"
+            android:textColor="@color/white"
+            android:layout_margin="20dp"/>
+
+        <RelativeLayout
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_below="@id/total_time"
+            android:padding="20dp">
+
+            <ImageView
+                android:contentDescription="@string/preview_button"
+                android:id="@+id/prev"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:layout_alignParentStart="true"
+                android:layout_centerVertical="true"
+                android:src="@drawable/ic_baseline_skip_previous_24" />
+            <ImageView
+                android:contentDescription="@string/next_button"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:src="@drawable/ic_baseline_skip_next_24"
+                android:layout_centerVertical="true"
+                android:layout_alignParentEnd="true"
+                android:id="@+id/next"/>
+
+            <ImageView
+                android:contentDescription="@string/pause_or_play_button"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:src="@drawable/ic_baseline_pause_circle_outline_24"
+                android:layout_centerInParent="true"
+                android:id="@+id/pause_play"/>
+
+        </RelativeLayout>
+
+    </RelativeLayout>
+
+</RelativeLayout>

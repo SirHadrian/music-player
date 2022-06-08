@@ -25,10 +25,10 @@
             android:exported="false" >
         </service>
 
-        <activity
-            android:name=".settings.SettingsActivity"
-            android:exported="false"
-            android:label="@string/title_activity_settings" />
+
+        <receiver android:name=".services.NotificationActionService"/>
+        <service android:name=".services.OnClearFromRecentService"/>
+
         <activity
             android:name=".MainActivity"
             android:exported="true" >

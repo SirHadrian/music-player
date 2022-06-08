@@ -7,11 +7,13 @@ import androidx.room.PrimaryKey;
 @Entity
 public class SongModel {
 
-    public SongModel(){}
+    public SongModel() {
+    }
 
-    public SongModel(String title, String songUri) {
+    public SongModel(String title, String songUri, int duration) {
         this.mSongTitle = title;
         this.mSongUri = songUri;
+        this.mSongDuration = duration;
     }
 
     @PrimaryKey(autoGenerate = true)
@@ -22,6 +24,16 @@ public class SongModel {
 
     @ColumnInfo(name = "song_uri")
     public String mSongUri;
+
+    public int mSongDuration;
+
+    public int get_mSongDuration() {
+        return mSongDuration;
+    }
+
+    public void set_mSongDuration(int mSongDuration) {
+        this.mSongDuration = mSongDuration;
+    }
 
     public String get_mSongTitle() {
         return mSongTitle;

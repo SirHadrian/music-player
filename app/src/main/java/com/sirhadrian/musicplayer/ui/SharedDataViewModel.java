@@ -6,15 +6,25 @@ import androidx.lifecycle.ViewModel;
 
 import com.sirhadrian.musicplayer.model.database.SongModel;
 
+import java.util.ArrayList;
+import java.util.List;
+
 public class SharedDataViewModel extends ViewModel {
 
-    private final MutableLiveData<SongModel> mPlayingNow = new MutableLiveData<>();
 
-    public void select(SongModel song){
-        mPlayingNow.setValue(song);
+
+    private final MutableLiveData<ArrayList<SongModel>> mSongsList = new MutableLiveData<>();
+    public LiveData<ArrayList<SongModel>> get_mSongsList() {
+        return mSongsList;
+    }
+    public void loadSongs(ArrayList<SongModel> songs) {
+        mSongsList.setValue(songs);
+    }
+    public void set_value_in_worker_thread(ArrayList<SongModel> songs) {
+        mSongsList.postValue(songs);
     }
 
-    public LiveData<SongModel> getPlayingNow() {
-        return mPlayingNow;
-    }
+    private final MutableLiveData<Integer> mPlayingNowIndex = new MutableLiveData<>();
+    public LiveData<Integer> get_mPlayingNowIndex(){return mPlayingNowIndex;}
+    public void set_mPlayingNowIndex(Integer i){mPlayingNowIndex.setValue(i);}
 }
