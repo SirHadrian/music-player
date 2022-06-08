@@ -208,29 +208,51 @@ public class SongDetailFragment extends Fragment implements ServiceConnection, P
             //MediaSessionCompat mediaSession = new MediaSessionCompat(context, "tag");
 
             PendingIntent pendingIntentPrevious;
-            Intent intentPrevious = new Intent(context, NotificationActionService.class)
-                    .setAction(ACTION_PREVIOUS);
-            pendingIntentPrevious = PendingIntent.getBroadcast(context, 0,
-                    intentPrevious, PendingIntent.FLAG_UPDATE_CURRENT);
+            int draw_prev;
+            if (mPlayingNowIndex - 1 == 0) {
+                pendingIntentPrevious = null;
+                draw_prev = 0;
+            } else {
+                Intent intentPrevious = new Intent(context, NotificationActionService.class)
+                        .setAction(ACTION_PREVIOUS);
+                pendingIntentPrevious = PendingIntent.getBroadcast(context, 0,
+                        intentPrevious, PendingIntent.FLAG_UPDATE_CURRENT);
+                draw_prev = R.drawable.ic_skip_previous_black_24dp;
+            }
 
+
+            int draw_playPause;
+            if (isPlaying) {
+                draw_playPause = R.drawable.ic_play_arrow_black_24dp;
+            } else {
+                draw_playPause = R.drawable.ic_pause_black_24dp;
+            }
             Intent intentPlay = new Intent(context, NotificationActionService.class)
                     .setAction(ACTION_PLAY);
             PendingIntent pendingIntentPlay = PendingIntent.getBroadcast(context, 0,
                     intentPlay, PendingIntent.FLAG_UPDATE_CURRENT);
 
             PendingIntent pendingIntentNext;
-            Intent intentNext = new Intent(context, NotificationActionService.class)
-                    .setAction(ACTION_NEXT);
-            pendingIntentNext = PendingIntent.getBroadcast(context, 0,
-                    intentNext, PendingIntent.FLAG_UPDATE_CURRENT);
+            int draw_next;
+            if (mPlayingNowIndex + 1 == mSongs.size()) {
+                pendingIntentNext = null;
+                draw_next = 0;
+            } else {
+                Intent intentNext = new Intent(context, NotificationActionService.class)
+                        .setAction(ACTION_NEXT);
+                pendingIntentNext = PendingIntent.getBroadcast(context, 0,
+                        intentNext, PendingIntent.FLAG_UPDATE_CURRENT);
+                draw_next = R.drawable.ic_skip_next_black_24dp;
+            }
+
 
             NotificationCompat.Builder builder = new NotificationCompat.Builder(requireActivity(), CHANNEL_ID)
                     .setSmallIcon(R.drawable.ic_music_note)
                     .setVisibility(NotificationCompat.VISIBILITY_PUBLIC)
 
-                    .addAction(R.drawable.ic_skip_previous_black_24dp, "Previous", pendingIntentPrevious) // #0
-                    .addAction(R.drawable.ic_pause_black_24dp, "Pause", pendingIntentPlay)  // #1
-                    .addAction(R.drawable.ic_skip_next_black_24dp, "Next", pendingIntentNext)     // #2
+                    .addAction(draw_prev, "Previous", pendingIntentPrevious) // #0
+                    .addAction(draw_playPause, "Pause", pendingIntentPlay)  // #1
+                    .addAction(draw_next, "Next", pendingIntentNext)     // #2
 
                     .setStyle(new androidx.media.app.NotificationCompat.MediaStyle()
                                     .setShowActionsInCompactView(0, 1, 2)

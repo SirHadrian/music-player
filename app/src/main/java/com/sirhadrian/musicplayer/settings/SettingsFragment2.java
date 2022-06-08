@@ -43,7 +43,6 @@ public class SettingsFragment2 extends PreferenceFragmentCompat {
         button.setOnPreferenceClickListener(preference -> {
             Intent intent = new Intent(Intent.ACTION_OPEN_DOCUMENT_TREE);
             intent.addCategory(Intent.CATEGORY_DEFAULT);
-            //intent.setDataAndType(Uri.parse(path), "*/*");
             startActivityForResult(Intent.createChooser(intent, "Choose directory"), mRequestCodeOpenDir);
 
             return true;

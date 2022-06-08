@@ -18,7 +18,6 @@ import java.util.List;
 public class PlaySongs extends Service {
     public final IBinder binder = new LocalBinder();
     MediaPlayer mPlayer;
-    //List<SongModel> songs = new ArrayList<>();
 
     @Override
     public void onCreate() {
