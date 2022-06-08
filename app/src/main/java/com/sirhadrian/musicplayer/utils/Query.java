@@ -28,7 +28,7 @@ public class Query {
         DocumentFile[] filesInDir = dir.listFiles();
 
         for (DocumentFile file : filesInDir) {
-            songs.add(new SongModel(file.getName(), file.getUri().toString()));
+            songs.add(new SongModel(file.getName(), file.getUri().toString(), 0));
         }
 
         return songs;
@@ -95,7 +95,7 @@ public class Query {
                 name = name.substring(0, name.lastIndexOf("."));
 
                 //song item
-                songs.add(new SongModel(name, uri.toString()));
+                songs.add(new SongModel(name, uri.toString(), duration));
             }
         }
         return songs;
@@ -114,7 +114,8 @@ public class Query {
 
         String[] projection = new String[]{
                 MediaStore.Audio.Media._ID,
-                MediaStore.Audio.Media.DISPLAY_NAME
+                MediaStore.Audio.Media.DISPLAY_NAME,
+                MediaStore.Audio.Media.DURATION
         };
         String selection = MediaStore.Audio.Media.DATA + " like ? ";
 
@@ -135,6 +136,8 @@ public class Query {
             int nameColumn =
                     cursor.getColumnIndexOrThrow(MediaStore.Audio.Media.DISPLAY_NAME);
 
+            int durationColumn = cursor.getColumnIndexOrThrow(MediaStore.Audio.Media.DURATION);
+
             while (cursor.moveToNext()) {
                 // Get values of columns for a given video.
                 long id = cursor.getLong(idColumn);
@@ -142,11 +145,12 @@ public class Query {
 
                 Uri contentUri = ContentUris.withAppendedId(
                         MediaStore.Audio.Media.EXTERNAL_CONTENT_URI, id);
+                int duration = cursor.getInt(durationColumn);
 
                 assert contentUri != null;
                 // Stores column values and the contentUri in a local object
                 // that represents the media file.
-                songs.add(new SongModel(name, contentUri.toString()));
+                songs.add(new SongModel(name, contentUri.toString(), duration));
             }
         }
         return songs;

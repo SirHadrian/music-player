@@ -9,11 +9,7 @@ import android.net.Uri;
 import android.os.Binder;
 import android.os.IBinder;
 
-import com.sirhadrian.musicplayer.model.database.SongModel;
-
 import java.io.IOException;
-import java.util.ArrayList;
-import java.util.List;
 
 public class PlaySongs extends Service {
     public final IBinder binder = new LocalBinder();
@@ -84,11 +80,21 @@ public class PlaySongs extends Service {
     }
 
     public int getDuration() {
-        return 0;
+        return mPlayer.getDuration();
+    }
+
+    public int getCurrentPosition() {
+        return mPlayer.getCurrentPosition();
     }
 
     public void seekTo(int position) {
+        if (isCreated()) {
+            mPlayer.seekTo(position);
+        }
+    }
 
+    public boolean isCreated() {
+        return mPlayer != null;
     }
 
     public void playSong(Context context, String uri) {
