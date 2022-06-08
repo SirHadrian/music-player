@@ -6,7 +6,6 @@ import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
 import android.widget.TextView;
-import android.widget.Toast;
 
 import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
@@ -44,13 +43,10 @@ public class SongsListFragment extends Fragment {
     public View onCreateView(@NonNull LayoutInflater inflater, @Nullable ViewGroup container,
                              @Nullable Bundle savedInstanceState) {
 
-        FragmentSongsListBinding binding = FragmentSongsListBinding.inflate(inflater, container,
-                false);
-
+        FragmentSongsListBinding binding = FragmentSongsListBinding.inflate(inflater, container, false);
         View view = binding.getRoot();
 
         mSongsList = new ArrayList<>();
-
 
         RecyclerView mRecyclerView = binding.fragmentSongsListRecyclerView;
         mRecyclerView.setLayoutManager(new LinearLayoutManager(getContext()));
@@ -60,11 +56,10 @@ public class SongsListFragment extends Fragment {
 
 
         mSharedData = new ViewModelProvider(requireActivity()).get(SharedDataViewModel.class);
-        SongsListViewModel mSongsListObserved = new ViewModelProvider(requireActivity()).get(SongsListViewModel.class);
 
-        mSongsListObserved.get_mSongsList().observe(getViewLifecycleOwner(), songModels -> {
+        mSharedData.get_mSongsList().observe(getViewLifecycleOwner(), songs -> {
             mSongsList.clear();
-            mSongsList.addAll(songModels);
+            mSongsList.addAll(songs);
             mSongsAdapter.notifyDataSetChanged();
         });
 
@@ -89,15 +84,12 @@ public class SongsListFragment extends Fragment {
 
         @Override
         public void onBindViewHolder(@NonNull SongHolder holder, int position) {
-            holder.get_mSongModel().set_mSongTitle(mSongsList.get(position).get_mSongTitle());
-            holder.get_mSongModel().set_mSongUri(mSongsTitles.get(position).get_mSongUri());
-
             holder.get_mSongTitle().setText(mSongsTitles.get(position).get_mSongTitle());
+            holder.set_mSongPosition(position);
 
             if (position % 2 == 0) {
                 holder.get_mRowLayout().setBackgroundColor(getResources().getColor(R.color.bg_dark));
-            }else
-            {
+            } else {
                 holder.get_mRowLayout().setBackgroundColor(getResources().getColor(R.color.bg_light));
             }
         }
@@ -110,8 +102,8 @@ public class SongsListFragment extends Fragment {
 
         private class SongHolder extends RecyclerView.ViewHolder implements View.OnClickListener {
             private final TextView mSongTitleTextView;
-            private SongModel mSongModel;
-            private ConstraintLayout mRowLayout;
+            private final ConstraintLayout mRowLayout;
+            private Integer mSongPosition;
 
             public SongHolder(@NonNull View itemView) {
                 super(itemView);
@@ -121,15 +113,17 @@ public class SongsListFragment extends Fragment {
                 mSongTitleTextView.setSelected(true);
             }
 
-            public SongModel get_mSongModel() {
-                if (mSongModel == null) {
-                    mSongModel = new SongModel();
-                }
-                return mSongModel;
-            }
 
             public TextView get_mSongTitle() {
                 return mSongTitleTextView;
+            }
+
+            public Integer get_mSongPosition() {
+                return mSongPosition;
+            }
+
+            public void set_mSongPosition(Integer mSongPosition) {
+                this.mSongPosition = mSongPosition;
             }
 
             public ConstraintLayout get_mRowLayout() {
@@ -138,10 +132,7 @@ public class SongsListFragment extends Fragment {
 
             @Override
             public void onClick(View view) {
-                Toast.makeText(getContext(), mSongModel.get_mSongTitle() + " Clicked!",
-                        Toast.LENGTH_SHORT).show();
-
-                mSharedData.select(get_mSongModel());
+                mSharedData.set_mPlayingNowIndex(get_mSongPosition());
 
                 viewPager2Activity.setCurrentItem(viewPager2Activity.getCurrentItem() + 1);
             }

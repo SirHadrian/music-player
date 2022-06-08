@@ -25,13 +25,13 @@ import com.sirhadrian.musicplayer.databinding.FragmentHolderBinding;
 import com.sirhadrian.musicplayer.model.database.SongModel;
 import com.sirhadrian.musicplayer.settings.SettingsFragment2;
 import com.sirhadrian.musicplayer.settings.SettingsViewModel;
-import com.sirhadrian.musicplayer.ui.SongsListViewModel;
+import com.sirhadrian.musicplayer.ui.SharedDataViewModel;
 import com.sirhadrian.musicplayer.ui.viewpager.ViewPagerFragment;
 import com.sirhadrian.musicplayer.utils.Query;
 import com.sirhadrian.musicplayer.utils.Result;
 import com.sirhadrian.musicplayer.utils.ResultCallback;
 
-import java.util.List;
+import java.util.ArrayList;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 
@@ -39,7 +39,7 @@ public class MainActivity extends AppCompatActivity {
 
     private Uri searchFolder;
 
-    private SongsListViewModel songsListViewModel;
+    private SharedDataViewModel mSharedData;
 
     private ActionBar actionBar;
 
@@ -53,11 +53,11 @@ public class MainActivity extends AppCompatActivity {
         View root = binding.getRoot();
         setContentView(root);
 
-        songsListViewModel = new ViewModelProvider(this).get(SongsListViewModel.class);
+        mSharedData = new ViewModelProvider(this).get(SharedDataViewModel.class);
 
         permission = registerForActivityResult(new ActivityResultContracts.RequestPermission(), result -> {
             if (result) {
-                songsListViewModel.loadSongs(Query.getAllAudioFromDevice(this, null));
+                mSharedData.loadSongs(Query.getAllAudioFromDevice(this, null));
             } else {
                 respondOnUserPermissionActs();
             }
@@ -83,12 +83,12 @@ public class MainActivity extends AppCompatActivity {
 
                 makeScanRequest(searchFolder, result -> {
                     if (result instanceof Result.Success) {
-                        List<SongModel> songs = ((Result.Success<List<SongModel>>) result).get_Data();
+                        ArrayList<SongModel> songs = ((Result.Success<ArrayList<SongModel>>) result).get_Data();
                         //writeCacheSongs(mSongs, preferences);
-                        songsListViewModel.set_value_in_worker_thread(songs);
+                        mSharedData.set_value_in_worker_thread(songs);
                         //songDao.insertAll(songs);
                     } else if (result instanceof Result.Error) {
-                        ((Result.Error<List<SongModel>>) result).exception.printStackTrace();
+                        ((Result.Error<ArrayList<SongModel>>) result).exception.printStackTrace();
                     }
                 });
             }
@@ -130,14 +130,14 @@ public class MainActivity extends AppCompatActivity {
         }
     }
 
-    private void makeScanRequest(Uri folder, ResultCallback<List<SongModel>> callback) {
+    private void makeScanRequest(Uri folder, ResultCallback<ArrayList<SongModel>> callback) {
         ExecutorService executor = Executors.newSingleThreadExecutor();
         executor.execute(() -> {
             try {
-                Result<List<SongModel>> result = new Result.Success<>(Query.getSongsFromFolder(this, folder));
+                Result<ArrayList<SongModel>> result = new Result.Success<>(Query.getSongsFromFolder(this, folder));
                 callback.onComplete(result);
             } catch (Exception e) {
-                Result<List<SongModel>> errorResult = new Result.Error<>(e);
+                Result<ArrayList<SongModel>> errorResult = new Result.Error<>(e);
                 callback.onComplete(errorResult);
             }
         });

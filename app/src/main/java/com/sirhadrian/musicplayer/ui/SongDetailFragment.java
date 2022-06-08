@@ -16,6 +16,9 @@ import android.util.Log;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
+import android.widget.ImageButton;
+import android.widget.ImageView;
+import android.widget.SeekBar;
 import android.widget.TextView;
 
 import androidx.annotation.NonNull;
@@ -33,44 +36,41 @@ import com.sirhadrian.musicplayer.services.OnClearFromRecentService;
 import com.sirhadrian.musicplayer.services.PlaySongs;
 import com.sirhadrian.musicplayer.utils.Playable;
 
-public class SongDetailFragment extends Fragment implements ServiceConnection, Playable {
+import java.util.ArrayList;
+import java.util.List;
+
+public class SongDetailFragment extends Fragment implements ServiceConnection, Playable, View.OnClickListener {
 
     private TextView mSongDetailTitle;
+
     private PlaySongs mService;
     private boolean mBound = false;
 
-    private SongModel mPlayingNow;
+    private ArrayList<SongModel> mSongs;
+    private Integer mPlayingNowIndex = null;
+    boolean isPlaying = false;
 
     public static final String CHANNEL_ID = "CHANNEL_1";
     public static final String ACTION_PREVIOUS = "action-previous";
     public static final String ACTION_PLAY = "action-play";
     public static final String ACTION_NEXT = "action-next";
 
-    boolean isPlaying = false;
-
-
-    public SongDetailFragment() {
-
-    }
 
     @Nullable
     @Override
     public View onCreateView(@NonNull LayoutInflater inflater, @Nullable ViewGroup container,
                              @Nullable Bundle savedInstanceState) {
 
-        FragmentSongDetailBinding binding = FragmentSongDetailBinding.inflate(inflater, container,
-                false);
+        FragmentSongDetailBinding binding = FragmentSongDetailBinding.inflate(inflater, container, false);
         View view = binding.getRoot();
 
 
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
             createNotificationChannel();
-
             BroadcastReceiver broadcastReceiver = new BroadcastReceiver() {
                 @Override
                 public void onReceive(Context context, Intent intent) {
                     String action = intent.getExtras().getString("action-name");
-
                     switch (action) {
                         case ACTION_PREVIOUS:
                             onTrackPrevious();
@@ -94,45 +94,90 @@ public class SongDetailFragment extends Fragment implements ServiceConnection, P
         }
 
         mSongDetailTitle = binding.songDetailTextView;
-        SharedDataViewModel mSharedData = new ViewModelProvider(requireActivity()).get(SharedDataViewModel.class);
 
-        mSharedData.getPlayingNow().observe(getViewLifecycleOwner(), songModel -> {
-            mPlayingNow = songModel;
-            playSong();
+        ImageView mArtImageView = binding.songArt;
+        SeekBar mSongSeekBar = binding.seekBar;
+
+        ImageButton mPlayPauseButton = binding.play;
+        ImageButton mPrevButton = binding.prev;
+        ImageButton mNextButton = binding.next;
+
+        mPlayPauseButton.setOnClickListener(this);
+        mPrevButton.setOnClickListener(this);
+        mNextButton.setOnClickListener(this);
+
+
+        SharedDataViewModel mSharedData = new ViewModelProvider(requireActivity()).get(SharedDataViewModel.class);
+        mSharedData.get_mSongsList().observe(getViewLifecycleOwner(), songs -> mSongs = songs);
+        mSharedData.get_mPlayingNowIndex().observe(getViewLifecycleOwner(), position -> {
+            mPlayingNowIndex = position;
+            if (mPlayingNowIndex != null) {
+                playSong(mSongs.get(mPlayingNowIndex));
+            }
         });
 
         return view;
     }
 
     @Override
+    public void onClick(View view) {
+        int buttonId = view.getId();
+
+        if (buttonId == R.id.prev) {
+            prev();
+        } else if (buttonId == R.id.next) {
+            next();
+        } else if (buttonId == R.id.play) {
+            playOrPause();
+        }
+    }
+
+    public void prev() {
+        if (mPlayingNowIndex - 1 >= 0) {
+            mPlayingNowIndex -= 1;
+            playSong(mSongs.get(mPlayingNowIndex));
+        }
+    }
+
+    public void next() {
+        if (mPlayingNowIndex + 1 < mSongs.size()) {
+            mPlayingNowIndex += 1;
+            playSong(mSongs.get(mPlayingNowIndex));
+        }
+    }
+
+    public void playOrPause() {
+        if (isPlaying) {
+            mService.pause();
+            isPlaying = false;
+        } else {
+            mService.start();
+            isPlaying = true;
+        }
+    }
+
+    @Override
     public void onTrackPrevious() {
         Log.e("buttons", "prev pressed");
+        prev();
     }
 
     @Override
     public void onTrackPlay() {
         Log.e("buttons", "play pressed");
-        mService.start();
-        isPlaying=true;
+        playOrPause();
     }
 
     @Override
     public void onTrackPause() {
         Log.e("buttons", "pause pressed");
-        mService.pause();
-        isPlaying=false;
+        playOrPause();
     }
 
     @Override
     public void onTrackNext() {
         Log.e("buttons", "next pressed");
-    }
-
-    @Override
-    public void onViewCreated(@NonNull View view, @Nullable Bundle savedInstanceState) {
-        super.onViewCreated(view, savedInstanceState);
-
-
+        next();
     }
 
     @Override
@@ -204,12 +249,10 @@ public class SongDetailFragment extends Fragment implements ServiceConnection, P
         }
     }
 
-
     @Override
     public void onResume() {
         super.onResume();
     }
-
 
     @Override
     public void onPause() {
@@ -237,20 +280,21 @@ public class SongDetailFragment extends Fragment implements ServiceConnection, P
         mService = binder.getService();
         mBound = true;
 
-        playSong();
+        if (mPlayingNowIndex != null) {
+            playSong(mSongs.get(mPlayingNowIndex));
+        }
     }
 
-    private void playSong() {
-        if (mBound && mPlayingNow != null) {
-            mSongDetailTitle.setText(mPlayingNow.get_mSongTitle());
-            createNotification(requireContext(), mPlayingNow.get_mSongTitle(), mPlayingNow.get_mSongUri());
-            isPlaying=true;
-            //createNotification(requireContext(), mPlayingNow);
+    private void playSong(SongModel play) {
+        if (mBound) {
+            mSongDetailTitle.setText(play.get_mSongTitle());
+            createNotification(requireContext(), play.get_mSongTitle(), play.get_mSongUri());
+            isPlaying = true;
 
             if (mService.isPlaying()) {
                 mService.stop();
             }
-            mService.playSong(requireContext(), mPlayingNow.get_mSongUri());
+            mService.playSong(requireContext(), play.get_mSongUri());
         }
     }
 

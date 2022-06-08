@@ -20,21 +20,16 @@ public class Query {
     public Query() {
     }
 
-    public static List<SongModel> getSongsFromFolder(final Context context, Uri folder) {
-        List<SongModel> songs = new ArrayList<>();
+    public static ArrayList<SongModel> getSongsFromFolder(final Context context, Uri folder) {
+        ArrayList<SongModel> songs = new ArrayList<>();
 
         DocumentFile dir = DocumentFile.fromTreeUri(context, folder);
-
-        //temp
-        Log.d("geturi", dir.getUri() + " ---- " + dir.getUri().getPath());
-
+        assert dir != null;
         DocumentFile[] filesInDir = dir.listFiles();
 
         for (DocumentFile file : filesInDir) {
             songs.add(new SongModel(file.getName(), file.getUri().toString()));
         }
-
-        Log.d("files", songs.toString());
 
         return songs;
     }
@@ -106,8 +101,8 @@ public class Query {
         return songs;
     }
 
-    public static List<SongModel> getAllAudioFromDevice(final Context context, Uri folderName) {
-        List<SongModel> songs = new ArrayList<>();
+    public static ArrayList<SongModel> getAllAudioFromDevice(final Context context, Uri folderName) {
+        ArrayList<SongModel> songs = new ArrayList<>();
         String testFolder = "/storage/44A6-B704/Documents/C_E_M";
 
         Uri collection;
