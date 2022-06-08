@@ -155,6 +155,4 @@ public class Query {
         }
         return songs;
     }
-
-
 }

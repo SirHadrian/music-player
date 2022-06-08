@@ -339,6 +339,7 @@ public class SongDetailFragment extends Fragment implements ServiceConnection, P
         super.onDestroy();
         mService.release();
         requireActivity().unbindService(this);
+        NotificationManagerCompat.from(requireContext()).cancelAll();
     }
 
     @Override
