@@ -1,5 +1,6 @@
 package com.sirhadrian.musicplayer.ui;
 
+import android.annotation.SuppressLint;
 import android.app.NotificationChannel;
 import android.app.NotificationManager;
 import android.app.PendingIntent;
@@ -37,7 +38,6 @@ import com.sirhadrian.musicplayer.services.PlaySongs;
 import com.sirhadrian.musicplayer.utils.Playable;
 
 import java.util.ArrayList;
-import java.util.List;
 
 public class SongDetailFragment extends Fragment implements ServiceConnection, Playable, View.OnClickListener {
 
@@ -49,6 +49,7 @@ public class SongDetailFragment extends Fragment implements ServiceConnection, P
     private ArrayList<SongModel> mSongs;
     private Integer mPlayingNowIndex = null;
     boolean isPlaying = false;
+    private ImageButton mPlayPauseButton;
 
     public static final String CHANNEL_ID = "CHANNEL_1";
     public static final String ACTION_PREVIOUS = "action-previous";
@@ -98,7 +99,7 @@ public class SongDetailFragment extends Fragment implements ServiceConnection, P
         ImageView mArtImageView = binding.songArt;
         SeekBar mSongSeekBar = binding.seekBar;
 
-        ImageButton mPlayPauseButton = binding.play;
+        mPlayPauseButton = binding.play;
         ImageButton mPrevButton = binding.prev;
         ImageButton mNextButton = binding.next;
 
@@ -113,6 +114,7 @@ public class SongDetailFragment extends Fragment implements ServiceConnection, P
             mPlayingNowIndex = position;
             if (mPlayingNowIndex != null) {
                 playSong(mSongs.get(mPlayingNowIndex));
+                isPlaying = true;
             }
         });
 
@@ -129,6 +131,11 @@ public class SongDetailFragment extends Fragment implements ServiceConnection, P
             next();
         } else if (buttonId == R.id.play) {
             playOrPause();
+            if (isPlaying) {
+                mPlayPauseButton.setImageResource(R.drawable.ic_pause_black_24dp);
+            }else{
+                mPlayPauseButton.setImageResource(R.drawable.ic_play_arrow_black_24dp);
+            }
         }
     }
 
@@ -160,24 +167,28 @@ public class SongDetailFragment extends Fragment implements ServiceConnection, P
     public void onTrackPrevious() {
         Log.e("buttons", "prev pressed");
         prev();
+        createNotification(requireContext(), mSongs.get(mPlayingNowIndex).get_mSongTitle());
     }
 
     @Override
     public void onTrackPlay() {
         Log.e("buttons", "play pressed");
         playOrPause();
+        createNotification(requireContext(), mSongs.get(mPlayingNowIndex).get_mSongTitle());
     }
 
     @Override
     public void onTrackPause() {
         Log.e("buttons", "pause pressed");
         playOrPause();
+        createNotification(requireContext(), mSongs.get(mPlayingNowIndex).get_mSongTitle());
     }
 
     @Override
     public void onTrackNext() {
         Log.e("buttons", "next pressed");
         next();
+        createNotification(requireContext(), mSongs.get(mPlayingNowIndex).get_mSongTitle());
     }
 
     @Override
@@ -203,7 +214,8 @@ public class SongDetailFragment extends Fragment implements ServiceConnection, P
         }
     }
 
-    private void createNotification(Context context, String title, String content) {
+    @SuppressLint("UnspecifiedImmutableFlag")
+    private void createNotification(Context context, String title) {
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
             //MediaSessionCompat mediaSession = new MediaSessionCompat(context, "tag");
 
@@ -223,9 +235,9 @@ public class SongDetailFragment extends Fragment implements ServiceConnection, P
 
             int draw_playPause;
             if (isPlaying) {
-                draw_playPause = R.drawable.ic_play_arrow_black_24dp;
-            } else {
                 draw_playPause = R.drawable.ic_pause_black_24dp;
+            } else {
+                draw_playPause = R.drawable.ic_play_arrow_black_24dp;
             }
             Intent intentPlay = new Intent(context, NotificationActionService.class)
                     .setAction(ACTION_PLAY);
@@ -258,11 +270,8 @@ public class SongDetailFragment extends Fragment implements ServiceConnection, P
                                     .setShowActionsInCompactView(0, 1, 2)
                             //.setMediaSession(mediaSession.getSessionToken())
                     )
-
                     .setContentTitle(title)
-                    .setContentText(content)
-
-                    .setPriority(NotificationCompat.PRIORITY_DEFAULT);
+                    .setPriority(NotificationCompat.PRIORITY_LOW); // No sound
 
             NotificationManagerCompat notificationManager = NotificationManagerCompat.from(requireActivity());
 
@@ -310,7 +319,7 @@ public class SongDetailFragment extends Fragment implements ServiceConnection, P
     private void playSong(SongModel play) {
         if (mBound) {
             mSongDetailTitle.setText(play.get_mSongTitle());
-            createNotification(requireContext(), play.get_mSongTitle(), play.get_mSongUri());
+            createNotification(requireContext(), play.get_mSongTitle());
             isPlaying = true;
 
             if (mService.isPlaying()) {
