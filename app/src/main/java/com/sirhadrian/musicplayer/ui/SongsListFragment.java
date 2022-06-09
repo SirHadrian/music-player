@@ -12,6 +12,8 @@ import androidx.annotation.Nullable;
 import androidx.constraintlayout.widget.ConstraintLayout;
 import androidx.fragment.app.Fragment;
 import androidx.lifecycle.ViewModelProvider;
+import androidx.navigation.NavController;
+import androidx.navigation.Navigation;
 import androidx.recyclerview.widget.LinearLayoutManager;
 import androidx.recyclerview.widget.RecyclerView;
 import androidx.viewpager2.widget.ViewPager2;
@@ -30,12 +32,12 @@ public class SongsListFragment extends Fragment {
     private SharedDataViewModel mSharedData;
 
     private SongsAdapter mSongsAdapter;
-    private final ViewPager2 viewPager2Activity;
+    private NavController navController;
 
 
-    public SongsListFragment(ViewPager2 viewPager) {
-        this.viewPager2Activity = viewPager;
-    }
+   public SongsListFragment SongsListFragment(){
+       return new SongsListFragment();
+   }
 
     @SuppressLint("NotifyDataSetChanged")
     @Nullable
@@ -64,6 +66,12 @@ public class SongsListFragment extends Fragment {
         });
 
         return view;
+    }
+
+    @Override
+    public void onViewCreated(@NonNull View view, @Nullable Bundle savedInstanceState) {
+        super.onViewCreated(view, savedInstanceState);
+        navController = Navigation.findNavController(view);
     }
 
     private class SongsAdapter extends RecyclerView.Adapter<SongsAdapter.SongHolder> {
@@ -134,7 +142,7 @@ public class SongsListFragment extends Fragment {
             public void onClick(View view) {
                 mSharedData.set_mPlayingNowIndex(get_mSongPosition());
 
-                viewPager2Activity.setCurrentItem(viewPager2Activity.getCurrentItem() + 1);
+                navController.navigate(R.id.action_songsListFragment_to_songDetailFragment);
             }
         }
     }

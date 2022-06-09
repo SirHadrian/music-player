@@ -1,0 +1,23 @@
+<?xml version="1.0" encoding="utf-8"?>
+<navigation xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
+    android:id="@+id/nav_controller"
+    app:startDestination="@id/songsListFragment">
+
+    <fragment
+        android:id="@+id/songsListFragment"
+        android:name="com.sirhadrian.musicplayer.ui.SongsListFragment"
+        android:label="SongsListFragment" >
+        <action
+            android:id="@+id/action_songsListFragment_to_songDetailFragment"
+            app:destination="@id/songDetailFragment" />
+    </fragment>
+    <fragment
+        android:id="@+id/songDetailFragment"
+        android:name="com.sirhadrian.musicplayer.ui.SongDetailFragment"
+        android:label="SongDetailFragment" >
+        <action
+            android:id="@+id/action_songDetailFragment_to_songsListFragment"
+            app:destination="@id/songsListFragment" />
+    </fragment>
+</navigation>

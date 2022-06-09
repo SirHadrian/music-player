@@ -23,10 +23,8 @@ import androidx.lifecycle.ViewModelProvider;
 
 import com.sirhadrian.musicplayer.databinding.FragmentHolderBinding;
 import com.sirhadrian.musicplayer.model.database.SongModel;
-import com.sirhadrian.musicplayer.settings.SettingsFragment2;
 import com.sirhadrian.musicplayer.settings.SettingsViewModel;
 import com.sirhadrian.musicplayer.ui.SharedDataViewModel;
-import com.sirhadrian.musicplayer.ui.viewpager.ViewPagerFragment;
 import com.sirhadrian.musicplayer.utils.Query;
 import com.sirhadrian.musicplayer.utils.Result;
 import com.sirhadrian.musicplayer.utils.ResultCallback;
@@ -75,7 +73,7 @@ public class MainActivity extends AppCompatActivity {
             int actionId = item.getItemId();
 
             if (actionId == R.id.settings) {
-                openSettingsFragment();
+                //openSettingsFragment();
             } else if (actionId == R.id.scan) {
                 if (searchFolder == null) return false;
                 makeScanRequest(searchFolder, result -> {
@@ -89,13 +87,6 @@ public class MainActivity extends AppCompatActivity {
             }
             return true;
         });
-
-        if (savedInstanceState == null) {
-            getSupportFragmentManager().beginTransaction()
-                    .setReorderingAllowed(true)
-                    .add(R.id.fragment_holder, new ViewPagerFragment())
-                    .commit();
-        }
     }
 
     private void respondOnUserPermissionActs() {
@@ -136,16 +127,6 @@ public class MainActivity extends AppCompatActivity {
                 callback.onComplete(errorResult);
             }
         });
-    }
-
-    private void openSettingsFragment() {
-        FragmentManager fragmentManager = getSupportFragmentManager();
-        if (fragmentManager.getBackStackEntryCount() > 0) return;
-        fragmentManager.beginTransaction()
-                .setReorderingAllowed(true)
-                .addToBackStack(null)
-                .add(R.id.fragment_holder, new SettingsFragment2())
-                .commit();
     }
 
     @Override
