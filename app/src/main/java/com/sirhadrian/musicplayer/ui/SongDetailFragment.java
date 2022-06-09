@@ -36,9 +36,9 @@ import com.sirhadrian.musicplayer.services.NotificationActionService;
 import com.sirhadrian.musicplayer.services.OnClearFromRecentService;
 import com.sirhadrian.musicplayer.services.PlaySongs;
 import com.sirhadrian.musicplayer.utils.Playable;
+import com.sirhadrian.musicplayer.utils.Utils;
 
 import java.util.ArrayList;
-import java.util.concurrent.TimeUnit;
 
 public class SongDetailFragment extends Fragment implements ServiceConnection, Playable, View.OnClickListener, SeekBar.OnSeekBarChangeListener {
 
@@ -130,7 +130,7 @@ public class SongDetailFragment extends Fragment implements ServiceConnection, P
             public void run() {
                 if(isPlaying && mBound){
                     mSongSeekBar.setProgress(mService.getCurrentPosition());
-                    endPosition.setText(convertToMMSS(mService.getCurrentPosition()+""));
+                    endPosition.setText(Utils.convertToMMSS(mService.getCurrentPosition()+""));
                 }
                 new Handler().postDelayed(this,100);
             }
@@ -198,13 +198,6 @@ public class SongDetailFragment extends Fragment implements ServiceConnection, P
             mService.start();
             isPlaying = true;
         }
-    }
-
-    public static String convertToMMSS(String duration){
-        long millis = Long.parseLong(duration);
-        return String.format("%02d:%02d",
-                TimeUnit.MILLISECONDS.toMinutes(millis) % TimeUnit.HOURS.toMinutes(1),
-                TimeUnit.MILLISECONDS.toSeconds(millis) % TimeUnit.MINUTES.toSeconds(1));
     }
 
     @Override

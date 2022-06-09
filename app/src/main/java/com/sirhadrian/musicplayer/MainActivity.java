@@ -62,9 +62,7 @@ public class MainActivity extends AppCompatActivity {
                 respondOnUserPermissionActs();
             }
         });
-
         permission.launch(Manifest.permission.WRITE_EXTERNAL_STORAGE);
-
 
         SettingsViewModel settingsViewModel = new ViewModelProvider(this).get(SettingsViewModel.class);
         settingsViewModel.get_mDirPath().observe(this, s -> searchFolder = s);
@@ -80,13 +78,10 @@ public class MainActivity extends AppCompatActivity {
                 openSettingsFragment();
             } else if (actionId == R.id.scan) {
                 if (searchFolder == null) return false;
-
                 makeScanRequest(searchFolder, result -> {
                     if (result instanceof Result.Success) {
                         ArrayList<SongModel> songs = ((Result.Success<ArrayList<SongModel>>) result).get_Data();
-                        //writeCacheSongs(mSongs, preferences);
                         mSharedData.set_value_in_worker_thread(songs);
-                        //songDao.insertAll(songs);
                     } else if (result instanceof Result.Error) {
                         ((Result.Error<ArrayList<SongModel>>) result).exception.printStackTrace();
                     }

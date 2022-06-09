@@ -2,7 +2,6 @@ package com.sirhadrian.musicplayer.settings;
 
 import static android.app.Activity.RESULT_OK;
 
-import android.content.Context;
 import android.content.Intent;
 import android.net.Uri;
 import android.os.Bundle;
@@ -16,17 +15,8 @@ import androidx.preference.PreferenceFragmentCompat;
 import com.sirhadrian.musicplayer.MainActivity;
 import com.sirhadrian.musicplayer.R;
 
-import java.io.File;
-import java.io.FileInputStream;
-import java.io.FileNotFoundException;
-import java.io.FileOutputStream;
-import java.io.IOException;
-import java.io.ObjectInputStream;
-import java.io.ObjectOutputStream;
-
 public class SettingsFragment2 extends PreferenceFragmentCompat {
 
-    private final String mCacheFile = "resultObject";
     private final int mRequestCodeOpenDir = 99919;
 
     private Preference button;
@@ -65,39 +55,5 @@ public class SettingsFragment2 extends PreferenceFragmentCompat {
         super.onResume();
         MainActivity activity = (MainActivity) requireActivity();
         activity.showUpButton();
-    }
-
-    private Uri readResultObjectFromFile(File file) {
-        FileInputStream fis;
-        Uri result = null;
-        try {
-            fis = requireContext().openFileInput(mCacheFile);
-        } catch (FileNotFoundException e) {
-            e.printStackTrace();
-            return null;
-        }
-        try {
-            ObjectInputStream ois = new ObjectInputStream(fis);
-            result = (Uri) ois.readObject();
-        } catch (IOException | ClassNotFoundException e) {
-            e.printStackTrace();
-        }
-        return result;
-    }
-
-    private void writeResultObjectToFile(Uri res, File file) {
-        FileOutputStream fos;
-        try {
-            fos = requireContext().openFileOutput(mCacheFile, Context.MODE_PRIVATE);
-        } catch (FileNotFoundException e) {
-            e.printStackTrace();
-            return;
-        }
-        try {
-            ObjectOutputStream oos = new ObjectOutputStream(fos);
-            oos.writeObject(res);
-        } catch (IOException e) {
-            e.printStackTrace();
-        }
     }
 }
