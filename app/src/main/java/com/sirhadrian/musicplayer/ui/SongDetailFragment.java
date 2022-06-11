@@ -10,6 +10,10 @@ import android.content.Context;
 import android.content.Intent;
 import android.content.IntentFilter;
 import android.content.ServiceConnection;
+import android.graphics.Bitmap;
+import android.graphics.BitmapFactory;
+import android.media.MediaMetadataRetriever;
+import android.net.Uri;
 import android.os.Build;
 import android.os.Bundle;
 import android.os.Handler;
@@ -43,6 +47,7 @@ import java.util.ArrayList;
 public class SongDetailFragment extends Fragment implements ServiceConnection, Playable, View.OnClickListener, SeekBar.OnSeekBarChangeListener {
 
     private TextView mSongTitle;
+    private ImageView mArtImageView;
 
     private PlaySongs mService;
     private boolean mBound = false;
@@ -98,7 +103,7 @@ public class SongDetailFragment extends Fragment implements ServiceConnection, P
         mSongTitle = binding.songTitle;
         mSongTitle.setSelected(true);
 
-        ImageView mArtImageView = binding.songArt;
+        mArtImageView = binding.songArt;
         mSongSeekBar = binding.seekBar;
         mSongSeekBar.setOnSeekBarChangeListener(this);
 
@@ -207,6 +212,23 @@ public class SongDetailFragment extends Fragment implements ServiceConnection, P
         } else {
             mService.start();
             isPlaying = true;
+        }
+    }
+
+    private void loadImageFromUri(SongModel song) {
+        MediaMetadataRetriever mmr = new MediaMetadataRetriever();
+        byte[] rawArt;
+        Bitmap art;
+        BitmapFactory.Options bfo = new BitmapFactory.Options();
+
+        mmr.setDataSource(requireContext(), Uri.parse(song.get_mSongUri()));
+        rawArt = mmr.getEmbeddedPicture();
+
+        // if rawArt is null then no cover art is embedded in the file or is not
+        // recognized as such.
+        if (null != rawArt) {
+            art = BitmapFactory.decodeByteArray(rawArt, 0, rawArt.length, bfo);
+            mArtImageView.setImageBitmap(art);
         }
     }
 
@@ -374,6 +396,7 @@ public class SongDetailFragment extends Fragment implements ServiceConnection, P
     private void playSong(SongModel play) {
         if (mBound) {
             displayCurrentSong(play);
+            loadImageFromUri(play);
             if (initSong) {
                 mService.playSong(requireContext(), play.get_mSongUri(), false);
                 initSong = false;
