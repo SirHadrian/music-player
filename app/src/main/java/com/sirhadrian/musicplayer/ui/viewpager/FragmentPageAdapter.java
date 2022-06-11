@@ -1,3 +1,4 @@
+
 package com.sirhadrian.musicplayer.ui.viewpager;
 
 import androidx.annotation.NonNull;

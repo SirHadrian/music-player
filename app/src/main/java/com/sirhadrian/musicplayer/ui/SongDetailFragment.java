@@ -10,6 +10,11 @@ import android.content.Context;
 import android.content.Intent;
 import android.content.IntentFilter;
 import android.content.ServiceConnection;
+import android.graphics.Bitmap;
+import android.graphics.BitmapFactory;
+import android.media.MediaMetadataRetriever;
+import android.media.MediaPlayer;
+import android.net.Uri;
 import android.os.Build;
 import android.os.Bundle;
 import android.os.Handler;
@@ -40,12 +45,14 @@ import com.sirhadrian.musicplayer.utils.Utils;
 
 import java.util.ArrayList;
 
-public class SongDetailFragment extends Fragment implements ServiceConnection, Playable, View.OnClickListener, SeekBar.OnSeekBarChangeListener {
+public class SongDetailFragment extends Fragment implements ServiceConnection, Playable, View.OnClickListener, SeekBar.OnSeekBarChangeListener, MediaPlayer.OnCompletionListener {
 
     private TextView mSongTitle;
+    private ImageView mArtImageView;
 
     private PlaySongs mService;
     private boolean mBound = false;
+    private boolean initSong = true;
 
     private ArrayList<SongModel> mSongs;
     private Integer mPlayingNowIndex = null;
@@ -66,7 +73,6 @@ public class SongDetailFragment extends Fragment implements ServiceConnection, P
 
         FragmentSongDetailBinding binding = FragmentSongDetailBinding.inflate(inflater, container, false);
         View view = binding.getRoot();
-
 
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
             createNotificationChannel();
@@ -91,7 +97,6 @@ public class SongDetailFragment extends Fragment implements ServiceConnection, P
                     }
                 }
             };
-
             requireActivity().registerReceiver(broadcastReceiver, new IntentFilter("SONG"));
             requireActivity().startService(new Intent(requireActivity().getBaseContext(), OnClearFromRecentService.class));
         }
@@ -99,7 +104,7 @@ public class SongDetailFragment extends Fragment implements ServiceConnection, P
         mSongTitle = binding.songTitle;
         mSongTitle.setSelected(true);
 
-        ImageView mArtImageView = binding.songArt;
+        mArtImageView = binding.songArt;
         mSongSeekBar = binding.seekBar;
         mSongSeekBar.setOnSeekBarChangeListener(this);
 
@@ -116,23 +121,29 @@ public class SongDetailFragment extends Fragment implements ServiceConnection, P
 
 
         SharedDataViewModel mSharedData = new ViewModelProvider(requireActivity()).get(SharedDataViewModel.class);
-        mSharedData.get_mSongsList().observe(getViewLifecycleOwner(), songs -> mSongs = songs);
+        mSharedData.get_mSongsList().observe(getViewLifecycleOwner(), songs -> {
+            mSongs = songs;
+            if (mPlayingNowIndex == null) {
+                mPlayingNowIndex = 0;
+                playSong(mSongs.get(mPlayingNowIndex));
+            }
+
+        });
         mSharedData.get_mPlayingNowIndex().observe(getViewLifecycleOwner(), position -> {
             mPlayingNowIndex = position;
             if (mPlayingNowIndex != null) {
                 playSong(mSongs.get(mPlayingNowIndex));
-                isPlaying = true;
             }
         });
 
         requireActivity().runOnUiThread(new Runnable() {
             @Override
             public void run() {
-                if(isPlaying && mBound){
+                if (isPlaying && mBound) {
                     mSongSeekBar.setProgress(mService.getCurrentPosition());
-                    endPosition.setText(Utils.convertToMMSS(mService.getCurrentPosition()+""));
+                    endPosition.setText(Utils.convertToMMSS(mService.getCurrentPosition() + ""));
                 }
-                new Handler().postDelayed(this,100);
+                new Handler().postDelayed(this, 100);
             }
         });
 
@@ -159,6 +170,11 @@ public class SongDetailFragment extends Fragment implements ServiceConnection, P
     }
 
     @Override
+    public void onCompletion(MediaPlayer mediaPlayer) {
+        next();
+    }
+
+    @Override
     public void onClick(View view) {
         int buttonId = view.getId();
 
@@ -168,11 +184,16 @@ public class SongDetailFragment extends Fragment implements ServiceConnection, P
             next();
         } else if (buttonId == R.id.pause_play) {
             playOrPause();
-            if (isPlaying) {
-                mPlayPauseButton.setImageResource(R.drawable.ic_baseline_pause_circle_outline_24);
-            }else{
-                mPlayPauseButton.setImageResource(R.drawable.ic_baseline_play_circle_outline_24);
-            }
+            redrawPlayPauseButton();
+            createNotification(requireContext(), mSongs.get(mPlayingNowIndex).get_mSongTitle());
+        }
+    }
+
+    private void redrawPlayPauseButton() {
+        if (isPlaying) {
+            mPlayPauseButton.setImageResource(R.drawable.ic_baseline_pause_circle_outline_24);
+        } else {
+            mPlayPauseButton.setImageResource(R.drawable.ic_baseline_play_circle_outline_24);
         }
     }
 
@@ -200,6 +221,23 @@ public class SongDetailFragment extends Fragment implements ServiceConnection, P
         }
     }
 
+    private void loadImageFromUri(SongModel song) {
+        MediaMetadataRetriever mmr = new MediaMetadataRetriever();
+        byte[] rawArt;
+        Bitmap art;
+        BitmapFactory.Options bfo = new BitmapFactory.Options();
+
+        mmr.setDataSource(requireContext(), Uri.parse(song.get_mSongUri()));
+        rawArt = mmr.getEmbeddedPicture();
+
+        // if rawArt is null then no cover art is embedded in the file or is not
+        // recognized as such.
+        if (null != rawArt) {
+            art = BitmapFactory.decodeByteArray(rawArt, 0, rawArt.length, bfo);
+            mArtImageView.setImageBitmap(art);
+        }
+    }
+
     @Override
     public void onTrackPrevious() {
         Log.e("buttons", "prev pressed");
@@ -212,6 +250,7 @@ public class SongDetailFragment extends Fragment implements ServiceConnection, P
         Log.e("buttons", "play pressed");
         playOrPause();
         createNotification(requireContext(), mSongs.get(mPlayingNowIndex).get_mSongTitle());
+        redrawPlayPauseButton();
     }
 
     @Override
@@ -219,6 +258,7 @@ public class SongDetailFragment extends Fragment implements ServiceConnection, P
         Log.e("buttons", "pause pressed");
         playOrPause();
         createNotification(requireContext(), mSongs.get(mPlayingNowIndex).get_mSongTitle());
+        redrawPlayPauseButton();
     }
 
     @Override
@@ -354,19 +394,31 @@ public class SongDetailFragment extends Fragment implements ServiceConnection, P
         }
     }
 
+    private void displayCurrentSong(SongModel play) {
+        mSongTitle.setText(play.get_mSongTitle());
+        createNotification(requireContext(), play.get_mSongTitle());
+    }
+
     private void playSong(SongModel play) {
         if (mBound) {
-            mSongTitle.setText(play.get_mSongTitle());
-            createNotification(requireContext(), play.get_mSongTitle());
-            isPlaying = true;
-
+            displayCurrentSong(play);
+            loadImageFromUri(play);
+            if (initSong) {
+                mService.playSong(requireContext(), play.get_mSongUri(), false);
+                initSong = false;
+                isPlaying = false;
+                redrawPlayPauseButton();
+                return;
+            }
             if (mService.isPlaying()) {
                 mService.stop();
             }
-            mService.playSong(requireContext(), play.get_mSongUri());
+
+            mService.playSong(requireContext(), play.get_mSongUri(), true);
             mSongSeekBar.setProgress(0);
             mSongSeekBar.setMax(mService.getDuration());
-
+            mService.setCompletionListener(this);
+            isPlaying = true;
         }
     }
 

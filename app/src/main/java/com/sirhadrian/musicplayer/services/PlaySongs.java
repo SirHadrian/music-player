@@ -9,6 +9,10 @@ import android.net.Uri;
 import android.os.Binder;
 import android.os.IBinder;
 
+import androidx.lifecycle.ViewModelProvider;
+
+import com.sirhadrian.musicplayer.ui.SharedDataViewModel;
+
 import java.io.IOException;
 
 public class PlaySongs extends Service {
@@ -30,6 +34,7 @@ public class PlaySongs extends Service {
                             .setUsage(AudioAttributes.USAGE_MEDIA)
                             .build()
             );
+
         }
     }
 
@@ -79,6 +84,10 @@ public class PlaySongs extends Service {
         }
     }
 
+    public void setCompletionListener(MediaPlayer.OnCompletionListener listener) {
+        mPlayer.setOnCompletionListener(listener);
+    }
+
     public int getDuration() {
         return mPlayer.getDuration();
     }
@@ -97,14 +106,17 @@ public class PlaySongs extends Service {
         return mPlayer != null;
     }
 
-    public void playSong(Context context, String uri) {
+    public void playSong(Context context, String uri, boolean playNow) {
         if (mPlayer == null) initMediaPlayer();
         else mPlayer.reset();
 
         try {
             mPlayer.setDataSource(this, Uri.parse(uri));
             mPlayer.prepare();
-            mPlayer.start();
+
+            if (playNow) {
+                mPlayer.start();
+            }
         } catch (IOException e) {
             e.printStackTrace();
         }
