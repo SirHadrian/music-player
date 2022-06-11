@@ -16,6 +16,7 @@ import androidx.navigation.NavController;
 import androidx.navigation.Navigation;
 import androidx.recyclerview.widget.LinearLayoutManager;
 import androidx.recyclerview.widget.RecyclerView;
+import androidx.viewpager2.widget.ViewPager2;
 
 import com.sirhadrian.musicplayer.R;
 import com.sirhadrian.musicplayer.databinding.FragmentSongsListBinding;
@@ -31,7 +32,13 @@ public class SongsListFragment extends Fragment {
     private SharedDataViewModel mSharedData;
 
     private SongsAdapter mSongsAdapter;
-    private NavController navController;
+    private ViewPager2 mViewPager;
+    //private NavController navController;
+
+
+    public SongsListFragment(ViewPager2 pager2) {
+        this.mViewPager = pager2;
+    }
 
 
     @SuppressLint("NotifyDataSetChanged")
@@ -66,7 +73,7 @@ public class SongsListFragment extends Fragment {
     @Override
     public void onViewCreated(@NonNull View view, @Nullable Bundle savedInstanceState) {
         super.onViewCreated(view, savedInstanceState);
-        navController = Navigation.findNavController(view);
+        //navController = Navigation.findNavController(view);
     }
 
     private class SongsAdapter extends RecyclerView.Adapter<SongsAdapter.SongHolder> {
@@ -136,7 +143,8 @@ public class SongsListFragment extends Fragment {
             @Override
             public void onClick(View view) {
                 mSharedData.set_mPlayingNowIndex(get_mSongPosition());
-                navController.navigate(R.id.action_songsListFragment_to_songDetailFragment);
+                //navController.navigate(R.id.action_songsListFragment_to_songDetailFragment);
+                mViewPager.setCurrentItem(mViewPager.getCurrentItem() + 1);
             }
         }
     }

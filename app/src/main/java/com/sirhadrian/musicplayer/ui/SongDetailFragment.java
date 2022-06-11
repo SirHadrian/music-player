@@ -46,6 +46,7 @@ public class SongDetailFragment extends Fragment implements ServiceConnection, P
 
     private PlaySongs mService;
     private boolean mBound = false;
+    private boolean initSong = true;
 
     private ArrayList<SongModel> mSongs;
     private Integer mPlayingNowIndex = null;
@@ -66,7 +67,6 @@ public class SongDetailFragment extends Fragment implements ServiceConnection, P
 
         FragmentSongDetailBinding binding = FragmentSongDetailBinding.inflate(inflater, container, false);
         View view = binding.getRoot();
-
 
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
             createNotificationChannel();
@@ -91,7 +91,6 @@ public class SongDetailFragment extends Fragment implements ServiceConnection, P
                     }
                 }
             };
-
             requireActivity().registerReceiver(broadcastReceiver, new IntentFilter("SONG"));
             requireActivity().startService(new Intent(requireActivity().getBaseContext(), OnClearFromRecentService.class));
         }
@@ -116,23 +115,29 @@ public class SongDetailFragment extends Fragment implements ServiceConnection, P
 
 
         SharedDataViewModel mSharedData = new ViewModelProvider(requireActivity()).get(SharedDataViewModel.class);
-        mSharedData.get_mSongsList().observe(getViewLifecycleOwner(), songs -> mSongs = songs);
+        mSharedData.get_mSongsList().observe(getViewLifecycleOwner(), songs -> {
+            mSongs = songs;
+            if (mPlayingNowIndex == null) {
+                mPlayingNowIndex = 0;
+                playSong(mSongs.get(mPlayingNowIndex));
+            }
+
+        });
         mSharedData.get_mPlayingNowIndex().observe(getViewLifecycleOwner(), position -> {
             mPlayingNowIndex = position;
             if (mPlayingNowIndex != null) {
                 playSong(mSongs.get(mPlayingNowIndex));
-                isPlaying = true;
             }
         });
 
         requireActivity().runOnUiThread(new Runnable() {
             @Override
             public void run() {
-                if(isPlaying && mBound){
+                if (isPlaying && mBound) {
                     mSongSeekBar.setProgress(mService.getCurrentPosition());
-                    endPosition.setText(Utils.convertToMMSS(mService.getCurrentPosition()+""));
+                    endPosition.setText(Utils.convertToMMSS(mService.getCurrentPosition() + ""));
                 }
-                new Handler().postDelayed(this,100);
+                new Handler().postDelayed(this, 100);
             }
         });
 
@@ -176,7 +181,7 @@ public class SongDetailFragment extends Fragment implements ServiceConnection, P
     private void redrawPlayPauseButton() {
         if (isPlaying) {
             mPlayPauseButton.setImageResource(R.drawable.ic_baseline_pause_circle_outline_24);
-        }else{
+        } else {
             mPlayPauseButton.setImageResource(R.drawable.ic_baseline_play_circle_outline_24);
         }
     }
@@ -361,19 +366,29 @@ public class SongDetailFragment extends Fragment implements ServiceConnection, P
         }
     }
 
+    private void displayCurrentSong(SongModel play) {
+        mSongTitle.setText(play.get_mSongTitle());
+        createNotification(requireContext(), play.get_mSongTitle());
+    }
+
     private void playSong(SongModel play) {
         if (mBound) {
-            mSongTitle.setText(play.get_mSongTitle());
-            createNotification(requireContext(), play.get_mSongTitle());
-            isPlaying = true;
-
+            displayCurrentSong(play);
+            if (initSong) {
+                mService.playSong(requireContext(), play.get_mSongUri(), false);
+                initSong = false;
+                isPlaying = false;
+                redrawPlayPauseButton();
+                return;
+            }
             if (mService.isPlaying()) {
                 mService.stop();
             }
-            mService.playSong(requireContext(), play.get_mSongUri());
+
+            mService.playSong(requireContext(), play.get_mSongUri(), true);
             mSongSeekBar.setProgress(0);
             mSongSeekBar.setMax(mService.getDuration());
-
+            isPlaying = true;
         }
     }
 
