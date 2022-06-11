@@ -55,7 +55,7 @@ public class SongDetailFragment extends Fragment implements ServiceConnection, P
     private boolean initSong = true;
 
     private ArrayList<SongModel> mSongs;
-    private Integer mPlayingNowIndex = null;
+    private Integer mPlayingNowIndex = 0;
     boolean isPlaying = false;
     private ImageView mPlayPauseButton;
     private SeekBar mSongSeekBar;
@@ -121,17 +121,10 @@ public class SongDetailFragment extends Fragment implements ServiceConnection, P
 
 
         SharedDataViewModel mSharedData = new ViewModelProvider(requireActivity()).get(SharedDataViewModel.class);
-        mSharedData.get_mSongsList().observe(getViewLifecycleOwner(), songs -> {
-            mSongs = songs;
-            if (mPlayingNowIndex == null) {
-                mPlayingNowIndex = 0;
-                playSong(mSongs.get(mPlayingNowIndex));
-            }
-
-        });
+        mSharedData.get_mSongsList().observe(getViewLifecycleOwner(), songs -> mSongs = songs);
         mSharedData.get_mPlayingNowIndex().observe(getViewLifecycleOwner(), position -> {
             mPlayingNowIndex = position;
-            if (mPlayingNowIndex != null) {
+            if (mPlayingNowIndex != null && mBound) {
                 playSong(mSongs.get(mPlayingNowIndex));
             }
         });
@@ -201,6 +194,7 @@ public class SongDetailFragment extends Fragment implements ServiceConnection, P
         if (mPlayingNowIndex - 1 >= 0) {
             mPlayingNowIndex -= 1;
             playSong(mSongs.get(mPlayingNowIndex));
+            redrawPlayPauseButton();
         }
     }
 
@@ -208,6 +202,7 @@ public class SongDetailFragment extends Fragment implements ServiceConnection, P
         if (mPlayingNowIndex + 1 < mSongs.size()) {
             mPlayingNowIndex += 1;
             playSong(mSongs.get(mPlayingNowIndex));
+            redrawPlayPauseButton();
         }
     }
 
@@ -392,6 +387,7 @@ public class SongDetailFragment extends Fragment implements ServiceConnection, P
         if (mPlayingNowIndex != null) {
             playSong(mSongs.get(mPlayingNowIndex));
         }
+        Log.d("myserv", "Service connected can modify player");
     }
 
     private void displayCurrentSong(SongModel play) {
@@ -405,6 +401,10 @@ public class SongDetailFragment extends Fragment implements ServiceConnection, P
             loadImageFromUri(play);
             if (initSong) {
                 mService.playSong(requireContext(), play.get_mSongUri(), false);
+                mSongSeekBar.setProgress(0);
+                mSongSeekBar.setMax(mService.getDuration());
+                mService.setCompletionListener(this);
+
                 initSong = false;
                 isPlaying = false;
                 redrawPlayPauseButton();
@@ -425,5 +425,6 @@ public class SongDetailFragment extends Fragment implements ServiceConnection, P
     @Override
     public void onServiceDisconnected(ComponentName arg0) {
         mBound = false;
+        Log.d("myserv", "Service disconnected can't modify player");
     }
 }
