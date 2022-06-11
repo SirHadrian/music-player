@@ -12,7 +12,6 @@ import androidx.lifecycle.ViewModelProvider;
 import androidx.preference.Preference;
 import androidx.preference.PreferenceFragmentCompat;
 
-import com.sirhadrian.musicplayer.MainActivity;
 import com.sirhadrian.musicplayer.R;
 
 public class SettingsFragment2 extends PreferenceFragmentCompat {

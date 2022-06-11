@@ -31,7 +31,7 @@ import androidx.core.app.NotificationManagerCompat;
 import androidx.fragment.app.Fragment;
 import androidx.lifecycle.ViewModelProvider;
 
-import com.sirhadrian.musicplayer.MainActivity2;
+import com.sirhadrian.musicplayer.MainActivity;
 import com.sirhadrian.musicplayer.R;
 import com.sirhadrian.musicplayer.databinding.FragmentSongDetailBinding;
 import com.sirhadrian.musicplayer.model.database.SongModel;
@@ -55,7 +55,7 @@ public class SongDetailFragment extends Fragment implements Playable, View.OnCli
     private ImageView mPlayPauseButton;
     private SeekBar mSongSeekBar;
 
-    private MainActivity2 mMainActBound;
+    private MainActivity mMainActBound;
 
     private TextView endPosition;
     private TextView startPosition;
@@ -74,7 +74,7 @@ public class SongDetailFragment extends Fragment implements Playable, View.OnCli
         FragmentSongDetailBinding binding = FragmentSongDetailBinding.inflate(inflater, container, false);
         View view = binding.getRoot();
 
-        mMainActBound= (MainActivity2) requireActivity();
+        mMainActBound= (MainActivity) requireActivity();
 
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
             createNotificationChannel();
