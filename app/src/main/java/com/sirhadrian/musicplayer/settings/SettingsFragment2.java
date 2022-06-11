@@ -53,7 +53,5 @@ public class SettingsFragment2 extends PreferenceFragmentCompat {
     @Override
     public void onResume() {
         super.onResume();
-        MainActivity activity = (MainActivity) requireActivity();
-        activity.showUpButton();
     }
 }

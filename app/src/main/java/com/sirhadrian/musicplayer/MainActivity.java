@@ -21,7 +21,6 @@ import androidx.core.content.ContextCompat;
 import androidx.fragment.app.FragmentManager;
 import androidx.lifecycle.ViewModelProvider;
 
-import com.sirhadrian.musicplayer.databinding.FragmentHolderBinding;
 import com.sirhadrian.musicplayer.model.database.SongModel;
 import com.sirhadrian.musicplayer.settings.SettingsViewModel;
 import com.sirhadrian.musicplayer.ui.SharedDataViewModel;
@@ -34,7 +33,7 @@ import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 
 public class MainActivity extends AppCompatActivity {
-
+/*
     private Uri searchFolder;
 
     private SharedDataViewModel mSharedData;
@@ -161,4 +160,6 @@ public class MainActivity extends AppCompatActivity {
     protected void onActivityResult(int requestCode, int resultCode, @Nullable Intent data) {
         super.onActivityResult(requestCode, resultCode, data);
     }
+
+ */
 }

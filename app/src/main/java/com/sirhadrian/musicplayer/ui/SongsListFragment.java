@@ -16,7 +16,6 @@ import androidx.navigation.NavController;
 import androidx.navigation.Navigation;
 import androidx.recyclerview.widget.LinearLayoutManager;
 import androidx.recyclerview.widget.RecyclerView;
-import androidx.viewpager2.widget.ViewPager2;
 
 import com.sirhadrian.musicplayer.R;
 import com.sirhadrian.musicplayer.databinding.FragmentSongsListBinding;
@@ -35,9 +34,7 @@ public class SongsListFragment extends Fragment {
     private NavController navController;
 
 
-   public SongsListFragment SongsListFragment(){
-       return new SongsListFragment();
-   }
+
 
     @SuppressLint("NotifyDataSetChanged")
     @Nullable
@@ -141,7 +138,6 @@ public class SongsListFragment extends Fragment {
             @Override
             public void onClick(View view) {
                 mSharedData.set_mPlayingNowIndex(get_mSongPosition());
-
                 navController.navigate(R.id.action_songsListFragment_to_songDetailFragment);
             }
         }
