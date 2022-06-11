@@ -13,6 +13,7 @@ import android.content.ServiceConnection;
 import android.graphics.Bitmap;
 import android.graphics.BitmapFactory;
 import android.media.MediaMetadataRetriever;
+import android.media.MediaPlayer;
 import android.net.Uri;
 import android.os.Build;
 import android.os.Bundle;
@@ -44,7 +45,7 @@ import com.sirhadrian.musicplayer.utils.Utils;
 
 import java.util.ArrayList;
 
-public class SongDetailFragment extends Fragment implements ServiceConnection, Playable, View.OnClickListener, SeekBar.OnSeekBarChangeListener {
+public class SongDetailFragment extends Fragment implements ServiceConnection, Playable, View.OnClickListener, SeekBar.OnSeekBarChangeListener, MediaPlayer.OnCompletionListener {
 
     private TextView mSongTitle;
     private ImageView mArtImageView;
@@ -166,6 +167,11 @@ public class SongDetailFragment extends Fragment implements ServiceConnection, P
     @Override
     public void onStopTrackingTouch(SeekBar seekBar) {
 
+    }
+
+    @Override
+    public void onCompletion(MediaPlayer mediaPlayer) {
+        next();
     }
 
     @Override
@@ -411,6 +417,7 @@ public class SongDetailFragment extends Fragment implements ServiceConnection, P
             mService.playSong(requireContext(), play.get_mSongUri(), true);
             mSongSeekBar.setProgress(0);
             mSongSeekBar.setMax(mService.getDuration());
+            mService.setCompletionListener(this);
             isPlaying = true;
         }
     }
