@@ -34,8 +34,6 @@ public class SongsListFragment extends Fragment {
     private NavController navController;
 
 
-
-
     @SuppressLint("NotifyDataSetChanged")
     @Nullable
     @Override

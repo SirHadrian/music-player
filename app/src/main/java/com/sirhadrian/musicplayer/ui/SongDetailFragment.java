@@ -168,11 +168,16 @@ public class SongDetailFragment extends Fragment implements ServiceConnection, P
             next();
         } else if (buttonId == R.id.pause_play) {
             playOrPause();
-            if (isPlaying) {
-                mPlayPauseButton.setImageResource(R.drawable.ic_baseline_pause_circle_outline_24);
-            }else{
-                mPlayPauseButton.setImageResource(R.drawable.ic_baseline_play_circle_outline_24);
-            }
+            redrawPlayPauseButton();
+            createNotification(requireContext(), mSongs.get(mPlayingNowIndex).get_mSongTitle());
+        }
+    }
+
+    private void redrawPlayPauseButton() {
+        if (isPlaying) {
+            mPlayPauseButton.setImageResource(R.drawable.ic_baseline_pause_circle_outline_24);
+        }else{
+            mPlayPauseButton.setImageResource(R.drawable.ic_baseline_play_circle_outline_24);
         }
     }
 
@@ -212,6 +217,7 @@ public class SongDetailFragment extends Fragment implements ServiceConnection, P
         Log.e("buttons", "play pressed");
         playOrPause();
         createNotification(requireContext(), mSongs.get(mPlayingNowIndex).get_mSongTitle());
+        redrawPlayPauseButton();
     }
 
     @Override
@@ -219,6 +225,7 @@ public class SongDetailFragment extends Fragment implements ServiceConnection, P
         Log.e("buttons", "pause pressed");
         playOrPause();
         createNotification(requireContext(), mSongs.get(mPlayingNowIndex).get_mSongTitle());
+        redrawPlayPauseButton();
     }
 
     @Override
