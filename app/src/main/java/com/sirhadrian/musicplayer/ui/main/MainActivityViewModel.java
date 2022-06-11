@@ -10,26 +10,6 @@ import java.lang.ref.WeakReference;
 
 public class MainActivityViewModel extends ViewModel {
 
-    private final MutableLiveData<PlaySongs> songService = new MutableLiveData<>();
-
-    public LiveData<PlaySongs> get_songService() {
-        return songService;
-    }
-
-    public void set_songService(PlaySongs service) {
-        songService.setValue(service);
-    }
-
-    private final MutableLiveData<Boolean> boundValue = new MutableLiveData<>();
-
-    public LiveData<Boolean> get_boundValue() {
-        return boundValue;
-    }
-
-    public void set_boundValue(Boolean bound) {
-        boundValue.setValue(bound);
-    }
-
     private boolean boundValueRaw;
 
     public boolean isBoundValueRaw() {
@@ -42,7 +22,7 @@ public class MainActivityViewModel extends ViewModel {
 
     private WeakReference<PlaySongs> serviceBound;
 
-    public PlaySongs getServiceBound() {
+    public PlaySongs get_mService() {
         if (serviceBound != null) {
             return serviceBound.get();
         } else {

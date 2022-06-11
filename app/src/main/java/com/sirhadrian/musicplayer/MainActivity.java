@@ -6,6 +6,7 @@ import androidx.annotation.NonNull;
 import androidx.appcompat.app.AlertDialog;
 import androidx.appcompat.app.AppCompatActivity;
 import androidx.appcompat.widget.Toolbar;
+import androidx.core.app.NotificationManagerCompat;
 import androidx.core.content.ContextCompat;
 import androidx.lifecycle.ViewModelProvider;
 import androidx.navigation.NavController;
@@ -158,19 +159,15 @@ public class MainActivity extends AppCompatActivity implements ServiceConnection
         super.onResume();
         mBound = mMainData.isBoundValueRaw();
         if (mService == null) {
-            mService = mMainData.getServiceBound();
+            mService = mMainData.get_mService();
         }
     }
 
-    public boolean ismBound() {
-        return mBound;
-    }
+    @Override
+    protected void onDestroy() {
+        super.onDestroy();
 
-    public void set_mBound(boolean mBound) {
-        this.mBound = mBound;
-    }
-
-    public PlaySongs get_mService() {
-        return mService;
+        mService.release();
+        unbindService(this);
     }
 }

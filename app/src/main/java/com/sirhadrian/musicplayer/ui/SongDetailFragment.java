@@ -37,6 +37,7 @@ import com.sirhadrian.musicplayer.databinding.FragmentSongDetailBinding;
 import com.sirhadrian.musicplayer.model.database.SongModel;
 import com.sirhadrian.musicplayer.services.NotificationActionService;
 import com.sirhadrian.musicplayer.services.OnClearFromRecentService;
+import com.sirhadrian.musicplayer.ui.main.MainActivityViewModel;
 import com.sirhadrian.musicplayer.utils.Playable;
 import com.sirhadrian.musicplayer.utils.Utils;
 
@@ -55,7 +56,7 @@ public class SongDetailFragment extends Fragment implements Playable, View.OnCli
     private ImageView mPlayPauseButton;
     private SeekBar mSongSeekBar;
 
-    private MainActivity mMainActBound;
+    private MainActivityViewModel mServiceBound;
 
     private TextView endPosition;
     private TextView startPosition;
@@ -74,7 +75,7 @@ public class SongDetailFragment extends Fragment implements Playable, View.OnCli
         FragmentSongDetailBinding binding = FragmentSongDetailBinding.inflate(inflater, container, false);
         View view = binding.getRoot();
 
-        mMainActBound= (MainActivity) requireActivity();
+        mServiceBound = new ViewModelProvider(requireActivity()).get(MainActivityViewModel.class);
 
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
             createNotificationChannel();
@@ -143,9 +144,9 @@ public class SongDetailFragment extends Fragment implements Playable, View.OnCli
 
     @Override
     public void onProgressChanged(SeekBar seekBar, int i, boolean b) {
-        if (isPlaying && mMainActBound.get_mService().isCreated()) {
+        if (isPlaying && mServiceBound.get_mService().isCreated()) {
             if (b) {
-                mMainActBound.get_mService().seekTo(i);
+                mServiceBound.get_mService().seekTo(i);
             }
         }
     }
@@ -206,10 +207,10 @@ public class SongDetailFragment extends Fragment implements Playable, View.OnCli
 
     public void playOrPause() {
         if (isPlaying) {
-            mMainActBound.get_mService().pause();
+            mServiceBound.get_mService().pause();
             isPlaying = false;
         } else {
-            mMainActBound.get_mService().start();
+            mServiceBound.get_mService().start();
             isPlaying = true;
         }
     }
@@ -355,9 +356,9 @@ public class SongDetailFragment extends Fragment implements Playable, View.OnCli
         requireActivity().runOnUiThread(new Runnable() {
             @Override
             public void run() {
-                if (isPlaying && mMainActBound.ismBound()) {
-                    mSongSeekBar.setProgress(mMainActBound.get_mService().getCurrentPosition());
-                    endPosition.setText(Utils.convertToMMSS(mMainActBound.get_mService().getCurrentPosition() + ""));
+                if (isPlaying && mServiceBound.isBoundValueRaw()) {
+                    mSongSeekBar.setProgress(mServiceBound.get_mService().getCurrentPosition());
+                    endPosition.setText(Utils.convertToMMSS(mServiceBound.get_mService().getCurrentPosition() + ""));
                 }
                 new Handler().postDelayed(this, 100);
             }
@@ -372,15 +373,12 @@ public class SongDetailFragment extends Fragment implements Playable, View.OnCli
     @Override
     public void onDestroy() {
         super.onDestroy();
-        mMainActBound.get_mService().release();
-        requireActivity().unbindService(mMainActBound);
         NotificationManagerCompat.from(requireContext()).cancelAll();
     }
 
     @Override
     public void onStop() {
         super.onStop();
-        mMainActBound.set_mBound(false);
     }
 
     private void displayCurrentSong(SongModel play) {
@@ -389,28 +387,28 @@ public class SongDetailFragment extends Fragment implements Playable, View.OnCli
     }
 
     private void playSong(SongModel play) {
-        if (mMainActBound.ismBound()) {
+        if (mServiceBound.isBoundValueRaw()) {
             displayCurrentSong(play);
             loadImageFromUri(play);
             if (initSong) {
-                mMainActBound.get_mService().playSong(requireContext(), play.get_mSongUri(), false);
+                mServiceBound.get_mService().playSong(requireContext(), play.get_mSongUri(), false);
                 mSongSeekBar.setProgress(0);
-                mSongSeekBar.setMax(mMainActBound.get_mService().getDuration());
-                mMainActBound.get_mService().setCompletionListener(this);
+                mSongSeekBar.setMax(mServiceBound.get_mService().getDuration());
+                mServiceBound.get_mService().setCompletionListener(this);
 
                 initSong = false;
                 isPlaying = false;
                 redrawPlayPauseButton();
                 return;
             }
-            if (mMainActBound.get_mService().isPlaying()) {
-                mMainActBound.get_mService().stop();
+            if (mServiceBound.get_mService().isPlaying()) {
+                mServiceBound.get_mService().stop();
             }
 
-            mMainActBound.get_mService().playSong(requireContext(), play.get_mSongUri(), true);
+            mServiceBound.get_mService().playSong(requireContext(), play.get_mSongUri(), true);
             mSongSeekBar.setProgress(0);
-            mSongSeekBar.setMax(mMainActBound.get_mService().getDuration());
-            mMainActBound.get_mService().setCompletionListener(this);
+            mSongSeekBar.setMax(mServiceBound.get_mService().getDuration());
+            mServiceBound.get_mService().setCompletionListener(this);
             isPlaying = true;
         }
     }
