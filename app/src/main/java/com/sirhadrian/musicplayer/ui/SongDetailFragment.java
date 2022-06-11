@@ -5,11 +5,9 @@ import android.app.NotificationChannel;
 import android.app.NotificationManager;
 import android.app.PendingIntent;
 import android.content.BroadcastReceiver;
-import android.content.ComponentName;
 import android.content.Context;
 import android.content.Intent;
 import android.content.IntentFilter;
-import android.content.ServiceConnection;
 import android.graphics.Bitmap;
 import android.graphics.BitmapFactory;
 import android.media.MediaMetadataRetriever;
@@ -18,7 +16,6 @@ import android.net.Uri;
 import android.os.Build;
 import android.os.Bundle;
 import android.os.Handler;
-import android.os.IBinder;
 import android.util.Log;
 import android.view.LayoutInflater;
 import android.view.View;
@@ -34,24 +31,22 @@ import androidx.core.app.NotificationManagerCompat;
 import androidx.fragment.app.Fragment;
 import androidx.lifecycle.ViewModelProvider;
 
+import com.sirhadrian.musicplayer.MainActivity2;
 import com.sirhadrian.musicplayer.R;
 import com.sirhadrian.musicplayer.databinding.FragmentSongDetailBinding;
 import com.sirhadrian.musicplayer.model.database.SongModel;
 import com.sirhadrian.musicplayer.services.NotificationActionService;
 import com.sirhadrian.musicplayer.services.OnClearFromRecentService;
-import com.sirhadrian.musicplayer.services.PlaySongs;
 import com.sirhadrian.musicplayer.utils.Playable;
 import com.sirhadrian.musicplayer.utils.Utils;
 
 import java.util.ArrayList;
 
-public class SongDetailFragment extends Fragment implements ServiceConnection, Playable, View.OnClickListener, SeekBar.OnSeekBarChangeListener, MediaPlayer.OnCompletionListener {
+public class SongDetailFragment extends Fragment implements Playable, View.OnClickListener, SeekBar.OnSeekBarChangeListener, MediaPlayer.OnCompletionListener {
 
     private TextView mSongTitle;
     private ImageView mArtImageView;
 
-    private PlaySongs mService;
-    private boolean mBound = false;
     private boolean initSong = true;
 
     private ArrayList<SongModel> mSongs;
@@ -59,6 +54,11 @@ public class SongDetailFragment extends Fragment implements ServiceConnection, P
     boolean isPlaying = false;
     private ImageView mPlayPauseButton;
     private SeekBar mSongSeekBar;
+
+    private MainActivity2 mMainActBound;
+
+    private TextView endPosition;
+    private TextView startPosition;
 
     public static final String CHANNEL_ID = "CHANNEL_1";
     public static final String ACTION_PREVIOUS = "action-previous";
@@ -73,6 +73,8 @@ public class SongDetailFragment extends Fragment implements ServiceConnection, P
 
         FragmentSongDetailBinding binding = FragmentSongDetailBinding.inflate(inflater, container, false);
         View view = binding.getRoot();
+
+        mMainActBound= (MainActivity2) requireActivity();
 
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
             createNotificationChannel();
@@ -108,8 +110,8 @@ public class SongDetailFragment extends Fragment implements ServiceConnection, P
         mSongSeekBar = binding.seekBar;
         mSongSeekBar.setOnSeekBarChangeListener(this);
 
-        TextView startPosition = binding.currentTime;
-        TextView endPosition = binding.totalTime;
+        startPosition = binding.currentTime;
+        endPosition = binding.totalTime;
 
         mPlayPauseButton = binding.pausePlay;
         ImageView mPrevButton = binding.prev;
@@ -121,33 +123,29 @@ public class SongDetailFragment extends Fragment implements ServiceConnection, P
 
 
         SharedDataViewModel mSharedData = new ViewModelProvider(requireActivity()).get(SharedDataViewModel.class);
-        mSharedData.get_mSongsList().observe(getViewLifecycleOwner(), songs -> mSongs = songs);
-        mSharedData.get_mPlayingNowIndex().observe(getViewLifecycleOwner(), position -> {
-            mPlayingNowIndex = position;
-            if (mPlayingNowIndex != null && mBound) {
+        mSharedData.get_mSongsList().observe(getViewLifecycleOwner(), songs -> {
+            mSongs = songs;
+            if (mPlayingNowIndex != null) {
                 playSong(mSongs.get(mPlayingNowIndex));
             }
         });
-
-        requireActivity().runOnUiThread(new Runnable() {
-            @Override
-            public void run() {
-                if (isPlaying && mBound) {
-                    mSongSeekBar.setProgress(mService.getCurrentPosition());
-                    endPosition.setText(Utils.convertToMMSS(mService.getCurrentPosition() + ""));
-                }
-                new Handler().postDelayed(this, 100);
+        mSharedData.get_mPlayingNowIndex().observe(getViewLifecycleOwner(), position -> {
+            mPlayingNowIndex = position;
+            initSong = false;
+            if (mPlayingNowIndex != null) {
+                playSong(mSongs.get(mPlayingNowIndex));
+                redrawPlayPauseButton();
+                createNotification(requireContext(), mSongs.get(mPlayingNowIndex).get_mSongTitle());
             }
         });
-
         return view;
     }
 
     @Override
     public void onProgressChanged(SeekBar seekBar, int i, boolean b) {
-        if (isPlaying && mService.isCreated()) {
+        if (isPlaying && mMainActBound.get_mService().isCreated()) {
             if (b) {
-                mService.seekTo(i);
+                mMainActBound.get_mService().seekTo(i);
             }
         }
     }
@@ -208,10 +206,10 @@ public class SongDetailFragment extends Fragment implements ServiceConnection, P
 
     public void playOrPause() {
         if (isPlaying) {
-            mService.pause();
+            mMainActBound.get_mService().pause();
             isPlaying = false;
         } else {
-            mService.start();
+            mMainActBound.get_mService().start();
             isPlaying = true;
         }
     }
@@ -266,8 +264,6 @@ public class SongDetailFragment extends Fragment implements ServiceConnection, P
     @Override
     public void onCreate(@Nullable Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
-        Intent intent = new Intent(requireContext(), PlaySongs.class);
-        requireActivity().bindService(intent, this, Context.BIND_AUTO_CREATE);
     }
 
     private void createNotificationChannel() {
@@ -355,6 +351,17 @@ public class SongDetailFragment extends Fragment implements ServiceConnection, P
     @Override
     public void onResume() {
         super.onResume();
+
+        requireActivity().runOnUiThread(new Runnable() {
+            @Override
+            public void run() {
+                if (isPlaying && mMainActBound.ismBound()) {
+                    mSongSeekBar.setProgress(mMainActBound.get_mService().getCurrentPosition());
+                    endPosition.setText(Utils.convertToMMSS(mMainActBound.get_mService().getCurrentPosition() + ""));
+                }
+                new Handler().postDelayed(this, 100);
+            }
+        });
     }
 
     @Override
@@ -365,29 +372,15 @@ public class SongDetailFragment extends Fragment implements ServiceConnection, P
     @Override
     public void onDestroy() {
         super.onDestroy();
-        mService.release();
-        requireActivity().unbindService(this);
+        mMainActBound.get_mService().release();
+        requireActivity().unbindService(mMainActBound);
         NotificationManagerCompat.from(requireContext()).cancelAll();
     }
 
     @Override
     public void onStop() {
         super.onStop();
-        mBound = false;
-    }
-
-    @Override
-    public void onServiceConnected(ComponentName className,
-                                   IBinder service) {
-        // We've bound to LocalService, cast the IBinder and get LocalService instance
-        PlaySongs.LocalBinder binder = (PlaySongs.LocalBinder) service;
-        mService = binder.getService();
-        mBound = true;
-
-        if (mPlayingNowIndex != null) {
-            playSong(mSongs.get(mPlayingNowIndex));
-        }
-        Log.d("myserv", "Service connected can modify player");
+        mMainActBound.set_mBound(false);
     }
 
     private void displayCurrentSong(SongModel play) {
@@ -396,35 +389,31 @@ public class SongDetailFragment extends Fragment implements ServiceConnection, P
     }
 
     private void playSong(SongModel play) {
-        if (mBound) {
+        if (mMainActBound.ismBound()) {
             displayCurrentSong(play);
             loadImageFromUri(play);
             if (initSong) {
-                mService.playSong(requireContext(), play.get_mSongUri(), false);
+                mMainActBound.get_mService().playSong(requireContext(), play.get_mSongUri(), false);
                 mSongSeekBar.setProgress(0);
-                mSongSeekBar.setMax(mService.getDuration());
-                mService.setCompletionListener(this);
+                mSongSeekBar.setMax(mMainActBound.get_mService().getDuration());
+                mMainActBound.get_mService().setCompletionListener(this);
 
                 initSong = false;
                 isPlaying = false;
                 redrawPlayPauseButton();
                 return;
             }
-            if (mService.isPlaying()) {
-                mService.stop();
+            if (mMainActBound.get_mService().isPlaying()) {
+                mMainActBound.get_mService().stop();
             }
 
-            mService.playSong(requireContext(), play.get_mSongUri(), true);
+            mMainActBound.get_mService().playSong(requireContext(), play.get_mSongUri(), true);
             mSongSeekBar.setProgress(0);
-            mSongSeekBar.setMax(mService.getDuration());
-            mService.setCompletionListener(this);
+            mSongSeekBar.setMax(mMainActBound.get_mService().getDuration());
+            mMainActBound.get_mService().setCompletionListener(this);
             isPlaying = true;
         }
     }
 
-    @Override
-    public void onServiceDisconnected(ComponentName arg0) {
-        mBound = false;
-        Log.d("myserv", "Service disconnected can't modify player");
-    }
+
 }
