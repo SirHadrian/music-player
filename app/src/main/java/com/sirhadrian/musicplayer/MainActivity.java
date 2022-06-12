@@ -28,6 +28,7 @@ import com.sirhadrian.musicplayer.model.database.SongModel;
 import com.sirhadrian.musicplayer.services.PlaySongs;
 import com.sirhadrian.musicplayer.ui.SharedDataViewModel;
 import com.sirhadrian.musicplayer.ui.main.MainActivityViewModel;
+import com.sirhadrian.musicplayer.ui.viewpager.ViewPagerFragment;
 import com.sirhadrian.musicplayer.utils.Query;
 import com.sirhadrian.musicplayer.utils.Result;
 import com.sirhadrian.musicplayer.utils.ResultCallback;
@@ -169,5 +170,12 @@ public class MainActivity extends AppCompatActivity implements ServiceConnection
         NotificationManagerCompat.from(this).cancelAll();
         mService.release();
         unbindService(this);
+    }
+
+    @Override
+    public void onBackPressed() {
+        if (ViewPagerFragment.isLastItem()) {
+            super.onBackPressed();
+        }
     }
 }

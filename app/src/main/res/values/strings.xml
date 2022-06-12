@@ -34,6 +34,7 @@
     <string name="preview_button">Preview Button</string>
     <string name="pause_or_play_button">Pause or Play Button</string>
     <string name="next_button">Next Button</string>
-    <string name="start_position">0:00</string>
+    <string name="start_position">00:00</string>
+    <string name="blur_background_for_detail_view">blur background for detail view</string>
 
 </resources>
