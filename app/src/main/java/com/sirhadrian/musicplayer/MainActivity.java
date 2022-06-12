@@ -86,14 +86,12 @@ public class MainActivity extends AppCompatActivity implements ServiceConnection
     protected void onSaveInstanceState(@NonNull Bundle outState) {
         super.onSaveInstanceState(outState);
         outState.putBoolean(bound_key, mBound);
-        Log.d("saveI", "saved instance");
     }
 
     @Override
     protected void onRestoreInstanceState(@NonNull Bundle savedInstanceState) {
         super.onRestoreInstanceState(savedInstanceState);
         mBound = savedInstanceState.getBoolean(bound_key, false);
-        Log.d("saveI", "loaded instance");
     }
 
     private void respondOnUserPermissionActs(Context context) {
@@ -139,8 +137,6 @@ public class MainActivity extends AppCompatActivity implements ServiceConnection
     @Override
     public void onServiceDisconnected(ComponentName arg0) {
         mBound = false;
-        Log.d("myserv", "Service disconnected can't modify player");
-
     }
 
     @Override
@@ -153,8 +149,6 @@ public class MainActivity extends AppCompatActivity implements ServiceConnection
 
         mMainData.set_BoundValueRaw(true);
         mMainData.setServiceBound(mService);
-
-        Log.d("myserv", "Service connected can modify player");
     }
 
     @Override
@@ -188,12 +182,5 @@ public class MainActivity extends AppCompatActivity implements ServiceConnection
     public void onConfigurationChanged(@NonNull Configuration newConfig) {
         super.onConfigurationChanged(newConfig);
         mMainData.setHasOrientationChanged(true);
-        //if (newConfig.orientation == Configuration.ORIENTATION_LANDSCAPE) {
-        //Toast.makeText(MainActivity.this, "Landscape Mode", Toast.LENGTH_SHORT).show();
-        //mMainData.setHasOrientationChanged(true);
-        //} else if (newConfig.orientation == Configuration.ORIENTATION_PORTRAIT) {
-        //Toast.makeText(MainActivity.this, "Portrait Mode", Toast.LENGTH_SHORT).show();
-        //mMainData.setHasOrientationChanged(true);
-        //}
     }
 }

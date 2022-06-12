@@ -395,7 +395,7 @@ public class SongDetailFragment extends Fragment implements Playable, View.OnCli
             displayCurrentSong(play);
             loadImageFromUri(play);
             if (justInitSong) {
-                mServiceBound.get_mService().playSong(requireContext(), play.get_mSongUri(), false);
+                mServiceBound.get_mService().playSong(play.get_mSongUri(), false);
                 mSongSeekBar.setProgress(0);
                 mSongSeekBar.setMax(mServiceBound.get_mService().getDuration());
                 mServiceBound.get_mService().setCompletionListener(this);
@@ -407,7 +407,7 @@ public class SongDetailFragment extends Fragment implements Playable, View.OnCli
                 mServiceBound.get_mService().stop();
             }
 
-            mServiceBound.get_mService().playSong(requireContext(), play.get_mSongUri(), true);
+            mServiceBound.get_mService().playSong(play.get_mSongUri(), true);
             mSongSeekBar.setProgress(0);
             mSongSeekBar.setMax(mServiceBound.get_mService().getDuration());
             endPosition.setText(Utils.convertToMMSS(mServiceBound.get_mService().getDuration() + ""));

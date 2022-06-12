@@ -9,10 +9,6 @@ import android.net.Uri;
 import android.os.Binder;
 import android.os.IBinder;
 
-import androidx.lifecycle.ViewModelProvider;
-
-import com.sirhadrian.musicplayer.ui.SharedDataViewModel;
-
 import java.io.IOException;
 
 public class PlaySongs extends Service {
@@ -106,7 +102,7 @@ public class PlaySongs extends Service {
         return mPlayer != null;
     }
 
-    public void playSong(Context context, String uri, boolean playNow) {
+    public void playSong(String uri, boolean playNow) {
         if (mPlayer == null) initMediaPlayer();
         else mPlayer.reset();
 
