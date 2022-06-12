@@ -12,11 +12,8 @@ import androidx.annotation.Nullable;
 import androidx.constraintlayout.widget.ConstraintLayout;
 import androidx.fragment.app.Fragment;
 import androidx.lifecycle.ViewModelProvider;
-import androidx.navigation.NavController;
-import androidx.navigation.Navigation;
 import androidx.recyclerview.widget.LinearLayoutManager;
 import androidx.recyclerview.widget.RecyclerView;
-import androidx.viewpager2.widget.ViewPager2;
 
 import com.sirhadrian.musicplayer.R;
 import com.sirhadrian.musicplayer.databinding.FragmentSongsListBinding;
@@ -72,10 +69,10 @@ public class SongsListFragment extends Fragment {
 
     private class SongsAdapter extends RecyclerView.Adapter<SongsAdapter.SongHolder> {
 
-        private final List<SongModel> mSongsTitles;
+        private final List<SongModel> mSongs;
 
         public SongsAdapter(List<SongModel> songs) {
-            this.mSongsTitles = songs;
+            this.mSongs = songs;
         }
 
         @NonNull
@@ -88,7 +85,8 @@ public class SongsListFragment extends Fragment {
 
         @Override
         public void onBindViewHolder(@NonNull SongHolder holder, int position) {
-            holder.get_mSongTitle().setText(mSongsTitles.get(position).get_mSongTitle());
+            holder.get_mSongTitle().setText(mSongs.get(position).get_mSongTitle());
+            holder.get_mSongArtistNameTextView().setText(mSongs.get(position).get_mArtistName());
             holder.set_mSongPosition(position);
 
             if (position % 2 == 0) {
@@ -100,18 +98,20 @@ public class SongsListFragment extends Fragment {
 
         @Override
         public int getItemCount() {
-            return mSongsTitles.size();
+            return mSongs.size();
         }
 
 
         private class SongHolder extends RecyclerView.ViewHolder implements View.OnClickListener {
             private final TextView mSongTitleTextView;
+            private final TextView mSongArtistNameTextView;
             private final ConstraintLayout mRowLayout;
             private Integer mSongPosition;
 
             public SongHolder(@NonNull View itemView) {
                 super(itemView);
                 mSongTitleTextView = itemView.findViewById(R.id.songTitle);
+                mSongArtistNameTextView = itemView.findViewById(R.id.songArtist);
                 mRowLayout = itemView.findViewById(R.id.row_constraint);
                 mSongTitleTextView.setOnClickListener(this);
                 mSongTitleTextView.setSelected(true);
@@ -122,6 +122,10 @@ public class SongsListFragment extends Fragment {
                 return mSongTitleTextView;
             }
 
+            public TextView get_mSongArtistNameTextView() {
+                return mSongArtistNameTextView;
+            }
+
             public Integer get_mSongPosition() {
                 return mSongPosition;
             }
@@ -129,6 +133,7 @@ public class SongsListFragment extends Fragment {
             public void set_mSongPosition(Integer mSongPosition) {
                 this.mSongPosition = mSongPosition;
             }
+
 
             public ConstraintLayout get_mRowLayout() {
                 return mRowLayout;

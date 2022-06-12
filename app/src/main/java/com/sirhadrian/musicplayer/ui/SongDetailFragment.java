@@ -47,6 +47,7 @@ import jp.wasabeef.blurry.Blurry;
 public class SongDetailFragment extends Fragment implements Playable, View.OnClickListener, SeekBar.OnSeekBarChangeListener, MediaPlayer.OnCompletionListener {
 
     private TextView mSongTitle;
+    private TextView mSongArtistName;
     private ImageView mArtImageView;
 
     private ArrayList<SongModel> mSongs;
@@ -108,6 +109,8 @@ public class SongDetailFragment extends Fragment implements Playable, View.OnCli
 
         mSongTitle = binding.songTitle;
         mSongTitle.setSelected(true);
+
+        mSongArtistName = binding.songArtist;
 
         mArtImageView = binding.songArt;
         mSongSeekBar = binding.seekBar;
@@ -387,6 +390,7 @@ public class SongDetailFragment extends Fragment implements Playable, View.OnCli
 
     private void displayCurrentSong(SongModel play) {
         mSongTitle.setText(play.get_mSongTitle());
+        mSongArtistName.setText(play.get_mArtistName());
         createNotification(requireContext(), play.get_mSongTitle());
     }
 

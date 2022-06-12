@@ -28,7 +28,7 @@ public class Query {
         DocumentFile[] filesInDir = dir.listFiles();
 
         for (DocumentFile file : filesInDir) {
-            songs.add(new SongModel(file.getName(), file.getUri().toString(), 0));
+            songs.add(new SongModel(file.getName(),"", file.getUri().toString(), 0));
         }
 
         return songs;
@@ -46,61 +46,6 @@ public class Query {
         }
     }
 
-    public static List<SongModel> getAllAudioFromDeviceV2(final Context context) {
-        List<SongModel> songs = new ArrayList<>();
-
-        Uri collection;
-        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.Q) {
-            collection = MediaStore.Audio.Media.getContentUri(MediaStore.VOLUME_EXTERNAL);
-        } else {
-            collection = MediaStore.Audio.Media.EXTERNAL_CONTENT_URI;
-        }
-
-        //projection
-        String[] projection = new String[]{
-                MediaStore.Audio.Media._ID,
-                MediaStore.Audio.Media.DISPLAY_NAME,
-                MediaStore.Audio.Media.DURATION,
-                MediaStore.Audio.Media.SIZE,
-                MediaStore.Audio.Media.ALBUM_ID,
-        };
-
-
-        //Querying
-        try (Cursor cursor = context.getContentResolver().query(collection, projection, null, null, null)) {
-
-            //cache the cursor indices
-            int idColumn = cursor.getColumnIndexOrThrow(MediaStore.Audio.Media._ID);
-            int nameColumn = cursor.getColumnIndexOrThrow(MediaStore.Audio.Media.DISPLAY_NAME);
-            int durationColumn = cursor.getColumnIndexOrThrow(MediaStore.Audio.Media.DURATION);
-            int sizeColumn = cursor.getColumnIndexOrThrow(MediaStore.Audio.Media.SIZE);
-            int albumIdColumn = cursor.getColumnIndexOrThrow(MediaStore.Audio.Media.ALBUM_ID);
-
-            //getting the values
-            while (cursor.moveToNext()) {
-                //get values of columns for a give audio file
-                long id = cursor.getLong(idColumn);
-                String name = cursor.getString(nameColumn);
-                int duration = cursor.getInt(durationColumn);
-                int size = cursor.getInt(sizeColumn);
-                long albumId = cursor.getLong(albumIdColumn);
-
-                //song uri
-                Uri uri = ContentUris.withAppendedId(MediaStore.Audio.Media.EXTERNAL_CONTENT_URI, id);
-
-                //album art uri
-                //Uri albumartUri = ContentUris.withAppendedId(Uri.parse("content://media/external/audio/albumart"), albumId);
-
-                //remove .mp3 extension on song's name
-                name = name.substring(0, name.lastIndexOf("."));
-
-                //song item
-                songs.add(new SongModel(name, uri.toString(), duration));
-            }
-        }
-        return songs;
-    }
-
     public static ArrayList<SongModel> getAllAudioFromDevice(final Context context, Uri folderName) {
         ArrayList<SongModel> songs = new ArrayList<>();
         String testFolder = "/storage/44A6-B704/Documents/C_E_M";
@@ -114,7 +59,8 @@ public class Query {
 
         String[] projection = new String[]{
                 MediaStore.Audio.Media._ID,
-                MediaStore.Audio.Media.DISPLAY_NAME,
+                MediaStore.Audio.Media.TITLE,
+                MediaStore.Audio.Media.ARTIST,
                 MediaStore.Audio.Media.DURATION
         };
         String selection = MediaStore.Audio.Media.DATA + " like ? ";
@@ -133,24 +79,24 @@ public class Query {
         )) {
             // Cache column indices.
             int idColumn = cursor.getColumnIndexOrThrow(MediaStore.Audio.Media._ID);
-            int nameColumn =
-                    cursor.getColumnIndexOrThrow(MediaStore.Audio.Media.DISPLAY_NAME);
+            int titleColumn = cursor.getColumnIndexOrThrow(MediaStore.Audio.Media.TITLE);
+            int artistColumn = cursor.getColumnIndexOrThrow(MediaStore.Audio.Media.ARTIST);
 
             int durationColumn = cursor.getColumnIndexOrThrow(MediaStore.Audio.Media.DURATION);
 
             while (cursor.moveToNext()) {
                 // Get values of columns for a given video.
                 long id = cursor.getLong(idColumn);
-                String name = cursor.getString(nameColumn);
+                String title = cursor.getString(titleColumn);
+                String artist = cursor.getString(artistColumn);
 
-                Uri contentUri = ContentUris.withAppendedId(
-                        MediaStore.Audio.Media.EXTERNAL_CONTENT_URI, id);
+                Uri contentUri = ContentUris.withAppendedId(MediaStore.Audio.Media.EXTERNAL_CONTENT_URI, id);
                 int duration = cursor.getInt(durationColumn);
 
                 assert contentUri != null;
                 // Stores column values and the contentUri in a local object
                 // that represents the media file.
-                songs.add(new SongModel(name, contentUri.toString(), duration));
+                songs.add(new SongModel(title, artist,  contentUri.toString(), duration));
             }
         }
         return songs;
