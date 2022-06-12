@@ -2,8 +2,11 @@ package com.sirhadrian.musicplayer.ui;
 
 import android.annotation.SuppressLint;
 import android.graphics.Bitmap;
+import android.graphics.BitmapFactory;
 import android.net.Uri;
+import android.os.AsyncTask;
 import android.os.Bundle;
+import android.util.LruCache;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
@@ -38,6 +41,9 @@ public class SongsListFragment extends Fragment {
     private SongsAdapter mSongsAdapter;
     //private NavController navController;
 
+    private LruCache<String, Bitmap> memoryCache;
+
+
     @SuppressLint("NotifyDataSetChanged")
     @Nullable
     @Override
@@ -64,7 +70,32 @@ public class SongsListFragment extends Fragment {
             mSongsAdapter.notifyDataSetChanged();
         });
 
+        final int maxMemory = (int) (Runtime.getRuntime().maxMemory() / 1024);
+
+        // Use 1/8th of the available memory for this memory cache.
+        final int cacheSize = maxMemory / 8;
+
+        memoryCache = new LruCache<String, Bitmap>(cacheSize) {
+            @Override
+            protected int sizeOf(String key, Bitmap bitmap) {
+                // The cache size will be measured in kilobytes rather than
+                // number of items.
+                return bitmap.getByteCount() / 1024;
+            }
+        };
+
+
         return view;
+    }
+
+    public void addBitmapToMemoryCache(String key, Bitmap bitmap) {
+        if (getBitmapFromMemCache(key) == null) {
+            memoryCache.put(key, bitmap);
+        }
+    }
+
+    public Bitmap getBitmapFromMemCache(String key) {
+        return memoryCache.get(key);
     }
 
     @Override
@@ -96,18 +127,28 @@ public class SongsListFragment extends Fragment {
             holder.get_mSongArtistNameTextView().setText(mSongs.get(position).get_mArtistName());
             holder.set_mSongPosition(position);
 
-            Bitmap art = Utils.decodeSampledBitmapFromResource(
-                    Utils.getByteArrayFrom(requireContext(), mSongs.get(position)),
-                    160, 160
-            );
+            Bitmap art = getBitmapFromMemCache(mSongs.get(position).get_mSongTitle());
+            if (art == null) {
+                art = Utils.decodeSampledBitmapFromResource(
+                        Utils.getByteArrayFrom(requireContext(), mSongs.get(position)),
+                        150, 150
+                );
+                // Default artwork
+                if (art == null) {
+                    art = BitmapFactory.decodeResource(getResources(), R.drawable.music_icon_big);
+                }
+                addBitmapToMemoryCache(mSongs.get(position).get_mSongTitle(), art);
+            }
+
             if (art != null) {
-                art = Bitmap.createScaledBitmap(art, 160, 160, false);
+                art = Bitmap.createScaledBitmap(art, 150, 150, false);
                 holder.get_mSmallSongIcon().setImageBitmap(art);
 
                 Blurry.with(requireContext())
                         .from(art)
                         .into(holder.get_mItemImageBackground());
             }
+
 
 //            if (position % 2 == 0) {
 //                holder.get_mRowLayout().setBackgroundColor(getResources().getColor(R.color.bg_dark));
