@@ -96,9 +96,12 @@ public class SongsListFragment extends Fragment {
             holder.get_mSongArtistNameTextView().setText(mSongs.get(position).get_mArtistName());
             holder.set_mSongPosition(position);
 
-            Bitmap art = Utils.loadImageFromUri(requireContext(), mSongs.get(position));
+            Bitmap art = Utils.decodeSampledBitmapFromResource(
+                    Utils.getByteArrayFrom(requireContext(), mSongs.get(position)),
+                    160, 160
+            );
             if (art != null) {
-                art = Bitmap.createScaledBitmap(art, 200, 200, false);
+                art = Bitmap.createScaledBitmap(art, 160, 160, false);
                 holder.get_mSmallSongIcon().setImageBitmap(art);
 
                 Blurry.with(requireContext())

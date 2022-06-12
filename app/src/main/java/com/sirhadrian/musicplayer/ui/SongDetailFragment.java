@@ -371,20 +371,21 @@ public class SongDetailFragment extends Fragment implements Playable, View.OnCli
 
         mSongArtistName.setText(play.get_mArtistName());
         createNotification(requireContext(), play.get_mSongTitle());
+
+        Bitmap art = Utils.decodeSampledBitmapFromResource(
+                Utils.getByteArrayFrom(requireContext(), play), 400, 400);
+        if (art != null) {
+            mArtImageView.setImageBitmap(art);
+            // Blur the background view with the bitmap
+            Blurry.with(requireContext())
+                    .from(art)
+                    .into(mBlurBackground);
+        }
     }
 
     private void playSong(SongModel play, boolean justInitSong) {
         if (mServiceBound.isBoundValueRaw()) {
             displayCurrentSong(play);
-
-            Bitmap art = Utils.loadImageFromUri(requireContext(), play);
-            if (art != null) {
-                mArtImageView.setImageBitmap(art);
-                // Blur the background view with the bitmap
-                Blurry.with(requireContext())
-                        .from(art)
-                        .into(mBlurBackground);
-            }
             if (justInitSong) {
                 mServiceBound.get_mService().playSong(play.get_mSongUri(), false);
                 mSongSeekBar.setProgress(0);
