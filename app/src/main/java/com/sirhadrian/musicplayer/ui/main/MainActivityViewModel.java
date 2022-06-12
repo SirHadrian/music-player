@@ -1,7 +1,5 @@
 package com.sirhadrian.musicplayer.ui.main;
 
-import androidx.lifecycle.LiveData;
-import androidx.lifecycle.MutableLiveData;
 import androidx.lifecycle.ViewModel;
 
 import com.sirhadrian.musicplayer.services.PlaySongs;
@@ -32,5 +30,15 @@ public class MainActivityViewModel extends ViewModel {
 
     public void setServiceBound(PlaySongs service) {
         serviceBound = new WeakReference<>(service);
+    }
+
+    private boolean hasOrientationChanged = false;
+
+    public void setHasOrientationChanged(boolean changed) {
+        this.hasOrientationChanged = changed;
+    }
+
+    public boolean isHasOrientationChanged() {
+        return hasOrientationChanged;
     }
 }

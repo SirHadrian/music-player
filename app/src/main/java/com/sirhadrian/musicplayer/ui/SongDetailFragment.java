@@ -49,11 +49,9 @@ public class SongDetailFragment extends Fragment implements Playable, View.OnCli
     private TextView mSongTitle;
     private ImageView mArtImageView;
 
-    private boolean initSong = true;
-
     private ArrayList<SongModel> mSongs;
     private Integer mPlayingNowIndex = 0;
-    boolean isPlaying = false;
+    private boolean isPlaying = false;
     private ImageView mPlayPauseButton;
     private SeekBar mSongSeekBar;
 
@@ -64,7 +62,6 @@ public class SongDetailFragment extends Fragment implements Playable, View.OnCli
 
     // For blurry
     private ImageView mBlurBackground;
-
 
     public static final String CHANNEL_ID = "CHANNEL_1";
     public static final String ACTION_PREVIOUS = "action-previous";
@@ -129,19 +126,15 @@ public class SongDetailFragment extends Fragment implements Playable, View.OnCli
 
         mBlurBackground = binding.blurBackground;
 
-
         SharedDataViewModel mSharedData = new ViewModelProvider(requireActivity()).get(SharedDataViewModel.class);
         mSharedData.get_mSongsList().observe(getViewLifecycleOwner(), songs -> {
             mSongs = songs;
-            if (mPlayingNowIndex != null) {
-                playSong(mSongs.get(mPlayingNowIndex));
-            }
+            if (mPlayingNowIndex != null) playSong(mSongs.get(mPlayingNowIndex), true);
         });
         mSharedData.get_mPlayingNowIndex().observe(getViewLifecycleOwner(), position -> {
             mPlayingNowIndex = position;
-            initSong = false;
             if (mPlayingNowIndex != null) {
-                playSong(mSongs.get(mPlayingNowIndex));
+                playSong(mSongs.get(mPlayingNowIndex), false);
                 redrawPlayPauseButton();
                 createNotification(requireContext(), mSongs.get(mPlayingNowIndex).get_mSongTitle());
             }
@@ -199,7 +192,7 @@ public class SongDetailFragment extends Fragment implements Playable, View.OnCli
     public void prev() {
         if (mPlayingNowIndex - 1 >= 0) {
             mPlayingNowIndex -= 1;
-            playSong(mSongs.get(mPlayingNowIndex));
+            playSong(mSongs.get(mPlayingNowIndex), false);
             redrawPlayPauseButton();
         }
     }
@@ -207,7 +200,7 @@ public class SongDetailFragment extends Fragment implements Playable, View.OnCli
     public void next() {
         if (mPlayingNowIndex + 1 < mSongs.size()) {
             mPlayingNowIndex += 1;
-            playSong(mSongs.get(mPlayingNowIndex));
+            playSong(mSongs.get(mPlayingNowIndex), false);
             redrawPlayPauseButton();
         }
     }
@@ -397,17 +390,15 @@ public class SongDetailFragment extends Fragment implements Playable, View.OnCli
         createNotification(requireContext(), play.get_mSongTitle());
     }
 
-    private void playSong(SongModel play) {
+    private void playSong(SongModel play, boolean justInitSong) {
         if (mServiceBound.isBoundValueRaw()) {
             displayCurrentSong(play);
             loadImageFromUri(play);
-            if (initSong) {
-                mServiceBound.get_mService().playSong(requireContext(), play.get_mSongUri(), false);
+            if (justInitSong) {
+                mServiceBound.get_mService().playSong(play.get_mSongUri(), false);
                 mSongSeekBar.setProgress(0);
                 mSongSeekBar.setMax(mServiceBound.get_mService().getDuration());
                 mServiceBound.get_mService().setCompletionListener(this);
-
-                initSong = false;
                 isPlaying = false;
                 redrawPlayPauseButton();
                 return;
@@ -416,7 +407,7 @@ public class SongDetailFragment extends Fragment implements Playable, View.OnCli
                 mServiceBound.get_mService().stop();
             }
 
-            mServiceBound.get_mService().playSong(requireContext(), play.get_mSongUri(), true);
+            mServiceBound.get_mService().playSong(play.get_mSongUri(), true);
             mSongSeekBar.setProgress(0);
             mSongSeekBar.setMax(mServiceBound.get_mService().getDuration());
             endPosition.setText(Utils.convertToMMSS(mServiceBound.get_mService().getDuration() + ""));

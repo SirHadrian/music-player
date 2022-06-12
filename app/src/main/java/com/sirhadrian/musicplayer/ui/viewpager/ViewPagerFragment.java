@@ -22,7 +22,7 @@ public class ViewPagerFragment extends Fragment {
 
     private List<Fragment> mViewPagerFragments;
     private FragmentStateAdapter mFragmentStateAdapter;
-    private ViewPager2 mFragmentViewPager;
+    private static ViewPager2 mFragmentViewPager;
 
 
     @Nullable
@@ -36,7 +36,7 @@ public class ViewPagerFragment extends Fragment {
         mFragmentViewPager = binding.fragmentViewPager2;
         mViewPagerFragments = new ArrayList<>();
 
-        Fragment songsListFragment = new SongsListFragment(mFragmentViewPager);
+        Fragment songsListFragment = new SongsListFragment();
         Fragment songDetailFragment = new SongDetailFragment();
 
         mViewPagerFragments.add(songsListFragment);
@@ -46,5 +46,19 @@ public class ViewPagerFragment extends Fragment {
         mFragmentViewPager.setAdapter(mFragmentStateAdapter);
 
         return root;
+    }
+
+    public static void goToDetail() {
+        if (mFragmentViewPager != null) {
+            mFragmentViewPager.setCurrentItem(mFragmentViewPager.getCurrentItem() + 1);
+        }
+    }
+
+    public static boolean isLastItem() {
+        if (mFragmentViewPager.getCurrentItem() == 0) {
+            return true;
+        }
+        mFragmentViewPager.setCurrentItem(mFragmentViewPager.getCurrentItem() - 1);
+        return false;
     }
 }

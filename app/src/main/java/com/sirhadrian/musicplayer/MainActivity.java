@@ -6,6 +6,7 @@ import android.content.Context;
 import android.content.Intent;
 import android.content.ServiceConnection;
 import android.content.pm.PackageManager;
+import android.content.res.Configuration;
 import android.net.Uri;
 import android.os.Build;
 import android.os.Bundle;
@@ -28,6 +29,7 @@ import com.sirhadrian.musicplayer.model.database.SongModel;
 import com.sirhadrian.musicplayer.services.PlaySongs;
 import com.sirhadrian.musicplayer.ui.SharedDataViewModel;
 import com.sirhadrian.musicplayer.ui.main.MainActivityViewModel;
+import com.sirhadrian.musicplayer.ui.viewpager.ViewPagerFragment;
 import com.sirhadrian.musicplayer.utils.Query;
 import com.sirhadrian.musicplayer.utils.Result;
 import com.sirhadrian.musicplayer.utils.ResultCallback;
@@ -84,14 +86,12 @@ public class MainActivity extends AppCompatActivity implements ServiceConnection
     protected void onSaveInstanceState(@NonNull Bundle outState) {
         super.onSaveInstanceState(outState);
         outState.putBoolean(bound_key, mBound);
-        Log.d("saveI", "saved instance");
     }
 
     @Override
     protected void onRestoreInstanceState(@NonNull Bundle savedInstanceState) {
         super.onRestoreInstanceState(savedInstanceState);
         mBound = savedInstanceState.getBoolean(bound_key, false);
-        Log.d("saveI", "loaded instance");
     }
 
     private void respondOnUserPermissionActs(Context context) {
@@ -137,7 +137,6 @@ public class MainActivity extends AppCompatActivity implements ServiceConnection
     @Override
     public void onServiceDisconnected(ComponentName arg0) {
         mBound = false;
-        Log.d("myserv", "Service disconnected can't modify player");
     }
 
     @Override
@@ -150,8 +149,6 @@ public class MainActivity extends AppCompatActivity implements ServiceConnection
 
         mMainData.set_BoundValueRaw(true);
         mMainData.setServiceBound(mService);
-
-        Log.d("myserv", "Service connected can modify player");
     }
 
     @Override
@@ -166,8 +163,24 @@ public class MainActivity extends AppCompatActivity implements ServiceConnection
     @Override
     protected void onDestroy() {
         super.onDestroy();
+        if (!mMainData.isHasOrientationChanged()) {
+            mService.release();
+            unbindService(this);
+        }
         NotificationManagerCompat.from(this).cancelAll();
-        mService.release();
-        unbindService(this);
+        mMainData.setHasOrientationChanged(false);
+    }
+
+    @Override
+    public void onBackPressed() {
+        if (ViewPagerFragment.isLastItem()) {
+            super.onBackPressed();
+        }
+    }
+
+    @Override
+    public void onConfigurationChanged(@NonNull Configuration newConfig) {
+        super.onConfigurationChanged(newConfig);
+        mMainData.setHasOrientationChanged(true);
     }
 }

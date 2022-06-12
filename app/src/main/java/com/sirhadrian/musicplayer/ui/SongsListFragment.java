@@ -21,6 +21,7 @@ import androidx.viewpager2.widget.ViewPager2;
 import com.sirhadrian.musicplayer.R;
 import com.sirhadrian.musicplayer.databinding.FragmentSongsListBinding;
 import com.sirhadrian.musicplayer.model.database.SongModel;
+import com.sirhadrian.musicplayer.ui.viewpager.ViewPagerFragment;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -32,14 +33,7 @@ public class SongsListFragment extends Fragment {
     private SharedDataViewModel mSharedData;
 
     private SongsAdapter mSongsAdapter;
-    private ViewPager2 mViewPager;
     //private NavController navController;
-
-
-    public SongsListFragment(ViewPager2 pager2) {
-        this.mViewPager = pager2;
-    }
-
 
     @SuppressLint("NotifyDataSetChanged")
     @Nullable
@@ -144,7 +138,7 @@ public class SongsListFragment extends Fragment {
             public void onClick(View view) {
                 mSharedData.set_mPlayingNowIndex(get_mSongPosition());
                 //navController.navigate(R.id.action_songsListFragment_to_songDetailFragment);
-                mViewPager.setCurrentItem(mViewPager.getCurrentItem() + 1);
+                ViewPagerFragment.goToDetail();
             }
         }
     }
