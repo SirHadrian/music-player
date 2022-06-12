@@ -7,6 +7,17 @@
     android:background="@color/bg_dark"
     tools:context=".MainActivity">
 
+    <ImageView
+        android:contentDescription="@string/blur_background_for_detail_view"
+        android:scaleType="centerCrop"
+        app:layout_constraintTop_toTopOf="parent"
+        app:layout_constraintBottom_toBottomOf="parent"
+        app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintEnd_toEndOf="parent"
+        android:layout_width="match_parent"
+        android:layout_height="match_parent"
+        android:id="@+id/blur_background" />
+
     <TextView
         android:id="@+id/song_title"
         android:layout_width="match_parent"

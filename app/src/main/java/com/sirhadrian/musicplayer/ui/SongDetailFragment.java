@@ -31,7 +31,6 @@ import androidx.core.app.NotificationManagerCompat;
 import androidx.fragment.app.Fragment;
 import androidx.lifecycle.ViewModelProvider;
 
-import com.sirhadrian.musicplayer.MainActivity;
 import com.sirhadrian.musicplayer.R;
 import com.sirhadrian.musicplayer.databinding.FragmentSongDetailBinding;
 import com.sirhadrian.musicplayer.model.database.SongModel;
@@ -42,6 +41,8 @@ import com.sirhadrian.musicplayer.utils.Playable;
 import com.sirhadrian.musicplayer.utils.Utils;
 
 import java.util.ArrayList;
+
+import jp.wasabeef.blurry.Blurry;
 
 public class SongDetailFragment extends Fragment implements Playable, View.OnClickListener, SeekBar.OnSeekBarChangeListener, MediaPlayer.OnCompletionListener {
 
@@ -61,6 +62,10 @@ public class SongDetailFragment extends Fragment implements Playable, View.OnCli
     private TextView endPosition;
     private TextView startPosition;
 
+    // For blurry
+    private ImageView mBlurBackground;
+
+
     public static final String CHANNEL_ID = "CHANNEL_1";
     public static final String ACTION_PREVIOUS = "action-previous";
     public static final String ACTION_PLAY = "action-play";
@@ -73,7 +78,7 @@ public class SongDetailFragment extends Fragment implements Playable, View.OnCli
                              @Nullable Bundle savedInstanceState) {
 
         FragmentSongDetailBinding binding = FragmentSongDetailBinding.inflate(inflater, container, false);
-        View view = binding.getRoot();
+        View root = binding.getRoot();
 
         mServiceBound = new ViewModelProvider(requireActivity()).get(MainActivityViewModel.class);
 
@@ -122,6 +127,8 @@ public class SongDetailFragment extends Fragment implements Playable, View.OnCli
         mPrevButton.setOnClickListener(this);
         mNextButton.setOnClickListener(this);
 
+        mBlurBackground = binding.blurBackground;
+
 
         SharedDataViewModel mSharedData = new ViewModelProvider(requireActivity()).get(SharedDataViewModel.class);
         mSharedData.get_mSongsList().observe(getViewLifecycleOwner(), songs -> {
@@ -139,7 +146,7 @@ public class SongDetailFragment extends Fragment implements Playable, View.OnCli
                 createNotification(requireContext(), mSongs.get(mPlayingNowIndex).get_mSongTitle());
             }
         });
-        return view;
+        return root;
     }
 
     @Override
@@ -229,6 +236,11 @@ public class SongDetailFragment extends Fragment implements Playable, View.OnCli
         if (null != rawArt) {
             art = BitmapFactory.decodeByteArray(rawArt, 0, rawArt.length, bfo);
             mArtImageView.setImageBitmap(art);
+
+            // Blur the background view with the bitmap
+            Blurry.with(requireContext())
+                    .from(art)
+                    .into(mBlurBackground);
         }
     }
 
@@ -358,7 +370,7 @@ public class SongDetailFragment extends Fragment implements Playable, View.OnCli
             public void run() {
                 if (isPlaying && mServiceBound.isBoundValueRaw()) {
                     mSongSeekBar.setProgress(mServiceBound.get_mService().getCurrentPosition());
-                    endPosition.setText(Utils.convertToMMSS(mServiceBound.get_mService().getCurrentPosition() + ""));
+                    startPosition.setText(Utils.convertToMMSS(mServiceBound.get_mService().getCurrentPosition() + ""));
                 }
                 new Handler().postDelayed(this, 100);
             }
@@ -373,7 +385,6 @@ public class SongDetailFragment extends Fragment implements Playable, View.OnCli
     @Override
     public void onDestroy() {
         super.onDestroy();
-        NotificationManagerCompat.from(requireContext()).cancelAll();
     }
 
     @Override
@@ -408,6 +419,7 @@ public class SongDetailFragment extends Fragment implements Playable, View.OnCli
             mServiceBound.get_mService().playSong(requireContext(), play.get_mSongUri(), true);
             mSongSeekBar.setProgress(0);
             mSongSeekBar.setMax(mServiceBound.get_mService().getDuration());
+            endPosition.setText(Utils.convertToMMSS(mServiceBound.get_mService().getDuration() + ""));
             mServiceBound.get_mService().setCompletionListener(this);
             isPlaying = true;
         }

@@ -53,5 +53,5 @@ dependencies {
     annotationProcessor "androidx.room:room-compiler:$room_version"
 
     implementation "androidx.media:media:1.6.0"
-
+    implementation 'jp.wasabeef:blurry:4.0.1'
 }
