@@ -53,7 +53,7 @@ public class SongDetailFragment extends Fragment implements Playable, View.OnCli
 
     private ArrayList<SongModel> mSongs;
     private Integer mPlayingNowIndex = 0;
-    boolean isPlaying = false;
+    private boolean isPlaying = false;
     private ImageView mPlayPauseButton;
     private SeekBar mSongSeekBar;
 
@@ -64,7 +64,6 @@ public class SongDetailFragment extends Fragment implements Playable, View.OnCli
 
     // For blurry
     private ImageView mBlurBackground;
-
 
     public static final String CHANNEL_ID = "CHANNEL_1";
     public static final String ACTION_PREVIOUS = "action-previous";
@@ -128,7 +127,6 @@ public class SongDetailFragment extends Fragment implements Playable, View.OnCli
         mNextButton.setOnClickListener(this);
 
         mBlurBackground = binding.blurBackground;
-
 
         SharedDataViewModel mSharedData = new ViewModelProvider(requireActivity()).get(SharedDataViewModel.class);
         mSharedData.get_mSongsList().observe(getViewLifecycleOwner(), songs -> {

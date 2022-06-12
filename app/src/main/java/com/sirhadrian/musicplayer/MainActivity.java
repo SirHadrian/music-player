@@ -6,6 +6,7 @@ import android.content.Context;
 import android.content.Intent;
 import android.content.ServiceConnection;
 import android.content.pm.PackageManager;
+import android.content.res.Configuration;
 import android.net.Uri;
 import android.os.Build;
 import android.os.Bundle;
@@ -139,6 +140,7 @@ public class MainActivity extends AppCompatActivity implements ServiceConnection
     public void onServiceDisconnected(ComponentName arg0) {
         mBound = false;
         Log.d("myserv", "Service disconnected can't modify player");
+
     }
 
     @Override
@@ -168,8 +170,8 @@ public class MainActivity extends AppCompatActivity implements ServiceConnection
     protected void onDestroy() {
         super.onDestroy();
         NotificationManagerCompat.from(this).cancelAll();
-        mService.release();
-        unbindService(this);
+        //mService.release();
+        //unbindService(this);
     }
 
     @Override
