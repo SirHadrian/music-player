@@ -169,9 +169,12 @@ public class MainActivity extends AppCompatActivity implements ServiceConnection
     @Override
     protected void onDestroy() {
         super.onDestroy();
+        if (!mMainData.isHasOrientationChanged()) {
+            mService.release();
+            unbindService(this);
+        }
         NotificationManagerCompat.from(this).cancelAll();
-        //mService.release();
-        //unbindService(this);
+        mMainData.setHasOrientationChanged(false);
     }
 
     @Override
@@ -179,5 +182,18 @@ public class MainActivity extends AppCompatActivity implements ServiceConnection
         if (ViewPagerFragment.isLastItem()) {
             super.onBackPressed();
         }
+    }
+
+    @Override
+    public void onConfigurationChanged(@NonNull Configuration newConfig) {
+        super.onConfigurationChanged(newConfig);
+        mMainData.setHasOrientationChanged(true);
+        //if (newConfig.orientation == Configuration.ORIENTATION_LANDSCAPE) {
+        //Toast.makeText(MainActivity.this, "Landscape Mode", Toast.LENGTH_SHORT).show();
+        //mMainData.setHasOrientationChanged(true);
+        //} else if (newConfig.orientation == Configuration.ORIENTATION_PORTRAIT) {
+        //Toast.makeText(MainActivity.this, "Portrait Mode", Toast.LENGTH_SHORT).show();
+        //mMainData.setHasOrientationChanged(true);
+        //}
     }
 }

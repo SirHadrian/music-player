@@ -49,8 +49,6 @@ public class SongDetailFragment extends Fragment implements Playable, View.OnCli
     private TextView mSongTitle;
     private ImageView mArtImageView;
 
-    private boolean initSong = true;
-
     private ArrayList<SongModel> mSongs;
     private Integer mPlayingNowIndex = 0;
     private boolean isPlaying = false;
@@ -131,15 +129,12 @@ public class SongDetailFragment extends Fragment implements Playable, View.OnCli
         SharedDataViewModel mSharedData = new ViewModelProvider(requireActivity()).get(SharedDataViewModel.class);
         mSharedData.get_mSongsList().observe(getViewLifecycleOwner(), songs -> {
             mSongs = songs;
-            if (mPlayingNowIndex != null) {
-                playSong(mSongs.get(mPlayingNowIndex));
-            }
+            if (mPlayingNowIndex != null) playSong(mSongs.get(mPlayingNowIndex), true);
         });
         mSharedData.get_mPlayingNowIndex().observe(getViewLifecycleOwner(), position -> {
             mPlayingNowIndex = position;
-            initSong = false;
             if (mPlayingNowIndex != null) {
-                playSong(mSongs.get(mPlayingNowIndex));
+                playSong(mSongs.get(mPlayingNowIndex), false);
                 redrawPlayPauseButton();
                 createNotification(requireContext(), mSongs.get(mPlayingNowIndex).get_mSongTitle());
             }
@@ -197,7 +192,7 @@ public class SongDetailFragment extends Fragment implements Playable, View.OnCli
     public void prev() {
         if (mPlayingNowIndex - 1 >= 0) {
             mPlayingNowIndex -= 1;
-            playSong(mSongs.get(mPlayingNowIndex));
+            playSong(mSongs.get(mPlayingNowIndex), false);
             redrawPlayPauseButton();
         }
     }
@@ -205,7 +200,7 @@ public class SongDetailFragment extends Fragment implements Playable, View.OnCli
     public void next() {
         if (mPlayingNowIndex + 1 < mSongs.size()) {
             mPlayingNowIndex += 1;
-            playSong(mSongs.get(mPlayingNowIndex));
+            playSong(mSongs.get(mPlayingNowIndex), false);
             redrawPlayPauseButton();
         }
     }
@@ -395,17 +390,15 @@ public class SongDetailFragment extends Fragment implements Playable, View.OnCli
         createNotification(requireContext(), play.get_mSongTitle());
     }
 
-    private void playSong(SongModel play) {
+    private void playSong(SongModel play, boolean justInitSong) {
         if (mServiceBound.isBoundValueRaw()) {
             displayCurrentSong(play);
             loadImageFromUri(play);
-            if (initSong) {
+            if (justInitSong) {
                 mServiceBound.get_mService().playSong(requireContext(), play.get_mSongUri(), false);
                 mSongSeekBar.setProgress(0);
                 mSongSeekBar.setMax(mServiceBound.get_mService().getDuration());
                 mServiceBound.get_mService().setCompletionListener(this);
-
-                initSong = false;
                 isPlaying = false;
                 redrawPlayPauseButton();
                 return;

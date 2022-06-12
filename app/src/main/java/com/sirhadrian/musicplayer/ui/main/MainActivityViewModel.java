@@ -33,4 +33,14 @@ public class MainActivityViewModel extends ViewModel {
     public void setServiceBound(PlaySongs service) {
         serviceBound = new WeakReference<>(service);
     }
+
+    private boolean hasOrientationChanged = false;
+
+    public void setHasOrientationChanged(boolean changed) {
+        this.hasOrientationChanged = changed;
+    }
+
+    public boolean isHasOrientationChanged() {
+        return hasOrientationChanged;
+    }
 }
