@@ -108,7 +108,6 @@ public class SongDetailFragment extends Fragment implements Playable, View.OnCli
         }
 
         mSongTitle = binding.songTitle;
-        mSongTitle.setSelected(true);
 
         mSongArtistName = binding.songArtist;
 
@@ -215,28 +214,6 @@ public class SongDetailFragment extends Fragment implements Playable, View.OnCli
         } else {
             mServiceBound.get_mService().start();
             isPlaying = true;
-        }
-    }
-
-    private void loadImageFromUri(SongModel song) {
-        MediaMetadataRetriever mmr = new MediaMetadataRetriever();
-        byte[] rawArt;
-        Bitmap art;
-        BitmapFactory.Options bfo = new BitmapFactory.Options();
-
-        mmr.setDataSource(requireContext(), Uri.parse(song.get_mSongUri()));
-        rawArt = mmr.getEmbeddedPicture();
-
-        // if rawArt is null then no cover art is embedded in the file or is not
-        // recognized as such.
-        if (null != rawArt) {
-            art = BitmapFactory.decodeByteArray(rawArt, 0, rawArt.length, bfo);
-            mArtImageView.setImageBitmap(art);
-
-            // Blur the background view with the bitmap
-            Blurry.with(requireContext())
-                    .from(art)
-                    .into(mBlurBackground);
         }
     }
 
@@ -390,6 +367,8 @@ public class SongDetailFragment extends Fragment implements Playable, View.OnCli
 
     private void displayCurrentSong(SongModel play) {
         mSongTitle.setText(play.get_mSongTitle());
+        mSongTitle.setSelected(true);
+
         mSongArtistName.setText(play.get_mArtistName());
         createNotification(requireContext(), play.get_mSongTitle());
     }
@@ -397,7 +376,15 @@ public class SongDetailFragment extends Fragment implements Playable, View.OnCli
     private void playSong(SongModel play, boolean justInitSong) {
         if (mServiceBound.isBoundValueRaw()) {
             displayCurrentSong(play);
-            loadImageFromUri(play);
+
+            Bitmap art = Utils.loadImageFromUri(requireContext(), play);
+            if (art != null) {
+                mArtImageView.setImageBitmap(art);
+                // Blur the background view with the bitmap
+                Blurry.with(requireContext())
+                        .from(art)
+                        .into(mBlurBackground);
+            }
             if (justInitSong) {
                 mServiceBound.get_mService().playSong(play.get_mSongUri(), false);
                 mSongSeekBar.setProgress(0);

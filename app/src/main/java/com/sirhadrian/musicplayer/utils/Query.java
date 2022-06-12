@@ -6,14 +6,12 @@ import android.database.Cursor;
 import android.net.Uri;
 import android.os.Build;
 import android.provider.MediaStore;
-import android.util.Log;
 
 import androidx.documentfile.provider.DocumentFile;
 
 import com.sirhadrian.musicplayer.model.database.SongModel;
 
 import java.util.ArrayList;
-import java.util.List;
 
 public class Query {
 
