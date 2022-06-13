@@ -10,4 +10,12 @@
 
     <color name="bg_dark">#E6000000</color>
     <color name="bg_light">#CD1C1C1C</color>
+
+    <color name="fabBackgroud">#216A8B</color>
+
+    <style name="CustomNoActionBar">
+        <item name="android:windowBackground">@drawable/custom_gradient_background</item>
+        <item name="windowActionBar">false</item>
+        <item name="windowNoTitle">true</item>
+    </style>
 </resources>

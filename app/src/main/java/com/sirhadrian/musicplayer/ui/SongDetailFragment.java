@@ -367,7 +367,7 @@ public class SongDetailFragment extends Fragment implements Playable, View.OnCli
                     )
                     .setContentTitle(title)
                     .setContentText(artist)
-                    .setPriority(NotificationCompat.PRIORITY_LOW); // No sound
+                    .setPriority(NotificationCompat.PRIORITY_MIN); // No sound
 
             NotificationManagerCompat notificationManager = NotificationManagerCompat.from(requireActivity());
 
