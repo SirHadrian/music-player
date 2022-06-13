@@ -39,5 +39,6 @@
     <string name="artist_name_here">Artist Name Here</string>
     <string name="background_for_individual_item">Background for individual item</string>
     <string name="shuffle_button">Shuffle button</string>
+    <string name="action_switch">action switch</string>
 
 </resources>

@@ -11,6 +11,7 @@ import android.net.Uri;
 import android.os.Build;
 import android.os.Bundle;
 import android.os.IBinder;
+import android.view.View;
 import android.widget.Toast;
 
 import androidx.activity.result.ActivityResultLauncher;
@@ -24,6 +25,8 @@ import androidx.core.content.ContextCompat;
 import androidx.lifecycle.ViewModelProvider;
 import androidx.navigation.NavController;
 
+import com.google.android.material.floatingactionbutton.FloatingActionButton;
+import com.sirhadrian.musicplayer.databinding.ActivityMainBinding;
 import com.sirhadrian.musicplayer.model.database.SongModel;
 import com.sirhadrian.musicplayer.services.PlaySongs;
 import com.sirhadrian.musicplayer.ui.SharedDataViewModel;
@@ -46,7 +49,6 @@ public class MainActivity extends AppCompatActivity implements ServiceConnection
     private SharedDataViewModel mSharedData;
     private MainActivityViewModel mMainData;
 
-    private Toolbar mToolBar;
     private ActivityResultLauncher<String> mUserPermission;
 
     // The activity should own the service
@@ -54,12 +56,18 @@ public class MainActivity extends AppCompatActivity implements ServiceConnection
     private PlaySongs mService;
     private boolean mBound;
 
+    // FABs
+    private FloatingActionButton masterSwitch;
+    private FloatingActionButton fab1;
+    private boolean isFABOpen;
+
     public static final String bound_key = "BOUND";
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
-        setContentView(R.layout.activity_main);
+        ActivityMainBinding binding = ActivityMainBinding.inflate(getLayoutInflater());
+        View root = binding.getRoot();
 
         Intent intent = new Intent(this, PlaySongs.class);
         bindService(intent, this, Context.BIND_AUTO_CREATE);
@@ -79,6 +87,33 @@ public class MainActivity extends AppCompatActivity implements ServiceConnection
 
         // Data persistence for Service
         mMainData = new ViewModelProvider(this).get(MainActivityViewModel.class);
+
+
+        masterSwitch = binding.masterSwitch;
+        fab1 = binding.fab1;
+
+        masterSwitch.setOnClickListener(view -> {
+            if (!isFABOpen) {
+                showFABMenu();
+                masterSwitch.setImageResource(R.drawable.ic_baseline_expand_less_24);
+            } else {
+                closeFABMenu();
+                masterSwitch.setImageResource(R.drawable.ic_baseline_expand_more_24);
+            }
+        });
+
+        setContentView(root);
+    }
+
+    private void closeFABMenu() {
+        isFABOpen = false;
+        fab1.animate().translationY(0);
+    }
+
+    private void showFABMenu() {
+        isFABOpen = true;
+        int base = 140;
+        fab1.animate().translationY(base);
     }
 
     @Override
