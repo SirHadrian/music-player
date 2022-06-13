@@ -35,6 +35,7 @@ import com.sirhadrian.musicplayer.services.NotificationActionService;
 import com.sirhadrian.musicplayer.services.OnClearFromRecentService;
 import com.sirhadrian.musicplayer.ui.main.MainActivityViewModel;
 import com.sirhadrian.musicplayer.utils.Playable;
+import com.sirhadrian.musicplayer.utils.Query;
 import com.sirhadrian.musicplayer.utils.Utils;
 
 import java.util.ArrayList;
@@ -56,6 +57,7 @@ public class SongDetailFragment extends Fragment implements Playable, View.OnCli
     private SeekBar mSongSeekBar;
 
     private boolean shuffled = false;
+    private boolean firstStart = true;
     private SharedDataViewModel mSharedData;
 
     private MainActivityViewModel mServiceBound;
@@ -134,8 +136,12 @@ public class SongDetailFragment extends Fragment implements Playable, View.OnCli
 
         mSharedData = new ViewModelProvider(requireActivity()).get(SharedDataViewModel.class);
         mSharedData.get_mSongsList().observe(getViewLifecycleOwner(), songs -> {
+            if (shuffled) return;
             mSongs = songs;
-            if (mPlayingNowIndex != null) playSong(mSongs.get(mPlayingNowIndex), true);
+            if (mPlayingNowIndex != null && firstStart) {
+                playSong(mSongs.get(mPlayingNowIndex), true);
+                firstStart = false;
+            }
         });
         mSharedData.get_mPlayingNowIndex().observe(getViewLifecycleOwner(), position -> {
             mPlayingNowIndex = position;
@@ -187,12 +193,15 @@ public class SongDetailFragment extends Fragment implements Playable, View.OnCli
         } else if (buttonId == R.id.shuffle) {
             if (shuffled) {
                 mShuffleButton.setImageResource(R.drawable.ic_baseline_shuffle_24);
-                mSongs = mSharedData.get_mSongsList().getValue();
                 shuffled = false;
+
+                mSharedData.loadSongs(Query.getAllAudioFromDevice(requireContext(), null));
             } else {
                 mShuffleButton.setImageResource(R.drawable.ic_baseline_shuffle_32_true);
-                Collections.shuffle(mSongs);
                 shuffled = true;
+
+                Collections.shuffle(mSongs);
+                mSharedData.loadSongs(mSongs);
             }
         }
     }
@@ -408,6 +417,7 @@ public class SongDetailFragment extends Fragment implements Playable, View.OnCli
                 mServiceBound.get_mService().playSong(play.get_mSongUri(), false);
                 mSongSeekBar.setProgress(0);
                 mSongSeekBar.setMax(mServiceBound.get_mService().getDuration());
+                endPosition.setText(Utils.convertToMMSS(mServiceBound.get_mService().getDuration() + ""));
                 mServiceBound.get_mService().setCompletionListener(this);
                 isPlaying = false;
                 redrawPlayPauseButton();

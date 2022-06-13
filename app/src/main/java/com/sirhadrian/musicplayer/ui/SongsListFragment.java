@@ -40,9 +40,7 @@ public class SongsListFragment extends Fragment {
 
     private SongsAdapter mSongsAdapter;
     //private NavController navController;
-
     private LruCache<String, Bitmap> memoryCache;
-
 
     @SuppressLint("NotifyDataSetChanged")
     @Nullable
@@ -126,6 +124,10 @@ public class SongsListFragment extends Fragment {
             holder.get_mSongArtistNameTextView().setText(mSongs.get(position).get_mArtistName());
             holder.set_mSongPosition(position);
 
+            processBitmapInBackground(holder);
+        }
+
+        private void processBitmapInBackground(SongHolder holder) {
             ExecutorService executor = Executors.newSingleThreadExecutor();
             executor.execute(() -> {
                 int position1 = holder.getAdapterPosition();
