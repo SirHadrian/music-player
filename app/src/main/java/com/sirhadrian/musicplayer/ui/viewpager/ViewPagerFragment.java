@@ -40,6 +40,7 @@ public class ViewPagerFragment extends Fragment {
     private FloatingActionButton mMasterSwitch;
     private FloatingActionButton mFabSettings;
     private boolean isFABOpen;
+    private static boolean settingsOpen = false;
 
     private NavController mNavCtrl;
 
@@ -68,7 +69,10 @@ public class ViewPagerFragment extends Fragment {
         mMasterSwitch = binding.masterSwitch;
         mFabSettings = binding.fabSettings;
 
-        mFabSettings.setOnClickListener(view -> mNavCtrl.navigate(R.id.action_viewPagerFragment_to_settingsFragment2));
+        mFabSettings.setOnClickListener(view -> {
+            mNavCtrl.navigate(R.id.action_viewPagerFragment_to_settingsFragment2);
+            settingsOpen = true;
+        });
 
         mMasterSwitch.setOnClickListener(view -> {
             if (!isFABOpen) {
@@ -114,6 +118,10 @@ public class ViewPagerFragment extends Fragment {
 
     public static boolean isLastItem() {
         if (mFragmentViewPager.getCurrentItem() == 0) {
+            return true;
+        }
+        if(settingsOpen){
+            settingsOpen = false;
             return true;
         }
         mFragmentViewPager.setCurrentItem(mFragmentViewPager.getCurrentItem() - 1);

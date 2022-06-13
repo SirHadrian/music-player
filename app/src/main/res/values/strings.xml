@@ -41,6 +41,6 @@
     <string name="shuffle_button">Shuffle button</string>
     <string name="action_switch">action switch</string>
     <string name="settings_fragment">Settings fragment</string>
-    <string name="scan_directory" />
+    <string name="scan_directory">ScanDirectory</string>
 
 </resources>
