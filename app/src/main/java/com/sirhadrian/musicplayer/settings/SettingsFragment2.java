@@ -47,13 +47,14 @@ public class SettingsFragment2 extends PreferenceFragmentCompat {
         // Action Buttons
         mScanDirectory = findPreference(getString(R.string.scan_directory));
         mScanButton = findPreference(getString(R.string.scan_button));
+        assert mScanButton != null;
+        mScanButton.setEnabled(false);
 
         assert mScanDirectory != null;
         mScanDirectory.setOnPreferenceClickListener(preference -> {
             Intent intent = new Intent(Intent.ACTION_OPEN_DOCUMENT_TREE);
             intent.addCategory(Intent.CATEGORY_DEFAULT);
             startActivityForResult(Intent.createChooser(intent, "Choose directory"), mRequestCodeOpenDir);
-            mScanButton.setEnabled(true);
             return true;
         });
         assert mScanButton != null;
@@ -83,6 +84,7 @@ public class SettingsFragment2 extends PreferenceFragmentCompat {
             mScanDirectory.setSummary(path.toString());
             mFolder = path;
             settingsViewModel.set_mDirPath(mFolder);
+            mScanButton.setEnabled(true);
         }
     }
 
