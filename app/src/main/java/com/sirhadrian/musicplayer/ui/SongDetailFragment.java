@@ -10,6 +10,7 @@ import android.content.Intent;
 import android.content.IntentFilter;
 import android.graphics.Bitmap;
 import android.media.MediaPlayer;
+import android.net.Uri;
 import android.os.Build;
 import android.os.Bundle;
 import android.os.Handler;
@@ -33,6 +34,7 @@ import com.sirhadrian.musicplayer.databinding.FragmentSongDetailBinding;
 import com.sirhadrian.musicplayer.model.database.SongModel;
 import com.sirhadrian.musicplayer.services.NotificationActionService;
 import com.sirhadrian.musicplayer.services.OnClearFromRecentService;
+import com.sirhadrian.musicplayer.settings.SettingsViewModel;
 import com.sirhadrian.musicplayer.ui.main.MainActivityViewModel;
 import com.sirhadrian.musicplayer.utils.Playable;
 import com.sirhadrian.musicplayer.utils.Query;
@@ -66,6 +68,9 @@ public class SongDetailFragment extends Fragment implements Playable, View.OnCli
     private TextView endPosition;
     private TextView startPosition;
 
+    private Uri mFolder = null;
+    private SettingsViewModel mSettings;
+
     // For blurry
     private ImageView mBlurBackground;
 
@@ -84,6 +89,7 @@ public class SongDetailFragment extends Fragment implements Playable, View.OnCli
         View root = binding.getRoot();
 
         mServiceBound = new ViewModelProvider(requireActivity()).get(MainActivityViewModel.class);
+        mSettings = new ViewModelProvider(requireActivity()).get(SettingsViewModel.class);
 
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
             createNotificationChannel();
@@ -152,6 +158,8 @@ public class SongDetailFragment extends Fragment implements Playable, View.OnCli
                 createNotification(requireContext(), mSongs.get(mPlayingNowIndex));
             }
         });
+        mSettings.get_mDirPath().observe(getViewLifecycleOwner(), folder -> this.mFolder = folder);
+
         return root;
     }
 
@@ -196,7 +204,11 @@ public class SongDetailFragment extends Fragment implements Playable, View.OnCli
                 mShuffleButton.setImageResource(R.drawable.ic_baseline_shuffle_24);
                 shuffled = false;
 
-                mSharedData.loadSongs(Query.getAllAudioFromDevice(requireContext(), null));
+                if (mFolder == null) {
+                    mSharedData.loadSongs(Query.getAllAudioFromDevice(requireContext(), null));
+                } else {
+                    mSharedData.loadSongs(Query.getSongsFromFolder(requireContext(), mFolder));
+                }
             } else {
                 mShuffleButton.setImageResource(R.drawable.ic_baseline_shuffle_32_true);
                 shuffled = true;

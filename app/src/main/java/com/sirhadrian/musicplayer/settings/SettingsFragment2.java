@@ -81,6 +81,7 @@ public class SettingsFragment2 extends PreferenceFragmentCompat {
             Uri path = data.getData();
             mScanDirectory.setSummary(path.toString());
             mFolder = path;
+            settingsViewModel.set_mDirPath(mFolder);
         }
     }
 
