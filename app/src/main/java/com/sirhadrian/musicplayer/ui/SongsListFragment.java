@@ -63,7 +63,6 @@ public class SongsListFragment extends Fragment {
 
 
         mSharedData = new ViewModelProvider(requireActivity()).get(SharedDataViewModel.class);
-
         mSharedData.get_mSongsList().observe(getViewLifecycleOwner(), songs -> {
             mSongsList.clear();
             mSongsList.addAll(songs);

@@ -38,5 +38,6 @@
     <string name="blur_background_for_detail_view">blur background for detail view</string>
     <string name="artist_name_here">Artist Name Here</string>
     <string name="background_for_individual_item">Background for individual item</string>
+    <string name="shuffle_button">Shuffle button</string>
 
 </resources>

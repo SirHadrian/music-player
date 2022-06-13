@@ -38,6 +38,7 @@ import com.sirhadrian.musicplayer.utils.Playable;
 import com.sirhadrian.musicplayer.utils.Utils;
 
 import java.util.ArrayList;
+import java.util.Collections;
 
 import jp.wasabeef.blurry.Blurry;
 
@@ -51,7 +52,11 @@ public class SongDetailFragment extends Fragment implements Playable, View.OnCli
     private Integer mPlayingNowIndex = 0;
     private boolean isPlaying = false;
     private ImageView mPlayPauseButton;
+    private ImageView mShuffleButton;
     private SeekBar mSongSeekBar;
+
+    private boolean shuffled = false;
+    private SharedDataViewModel mSharedData;
 
     private MainActivityViewModel mServiceBound;
 
@@ -118,6 +123,8 @@ public class SongDetailFragment extends Fragment implements Playable, View.OnCli
         mPlayPauseButton = binding.pausePlay;
         ImageView mPrevButton = binding.prev;
         ImageView mNextButton = binding.next;
+        mShuffleButton = binding.shuffle;
+        mShuffleButton.setOnClickListener(this);
 
         mPlayPauseButton.setOnClickListener(this);
         mPrevButton.setOnClickListener(this);
@@ -125,7 +132,7 @@ public class SongDetailFragment extends Fragment implements Playable, View.OnCli
 
         mBlurBackground = binding.blurBackground;
 
-        SharedDataViewModel mSharedData = new ViewModelProvider(requireActivity()).get(SharedDataViewModel.class);
+        mSharedData = new ViewModelProvider(requireActivity()).get(SharedDataViewModel.class);
         mSharedData.get_mSongsList().observe(getViewLifecycleOwner(), songs -> {
             mSongs = songs;
             if (mPlayingNowIndex != null) playSong(mSongs.get(mPlayingNowIndex), true);
@@ -135,7 +142,7 @@ public class SongDetailFragment extends Fragment implements Playable, View.OnCli
             if (mPlayingNowIndex != null) {
                 playSong(mSongs.get(mPlayingNowIndex), false);
                 redrawPlayPauseButton();
-                createNotification(requireContext(), mSongs.get(mPlayingNowIndex).get_mSongTitle());
+                createNotification(requireContext(), mSongs.get(mPlayingNowIndex));
             }
         });
         return root;
@@ -176,7 +183,17 @@ public class SongDetailFragment extends Fragment implements Playable, View.OnCli
         } else if (buttonId == R.id.pause_play) {
             playOrPause();
             redrawPlayPauseButton();
-            createNotification(requireContext(), mSongs.get(mPlayingNowIndex).get_mSongTitle());
+            createNotification(requireContext(), mSongs.get(mPlayingNowIndex));
+        } else if (buttonId == R.id.shuffle) {
+            if (shuffled) {
+                mShuffleButton.setImageResource(R.drawable.ic_baseline_shuffle_24);
+                mSongs = mSharedData.get_mSongsList().getValue();
+                shuffled = false;
+            } else {
+                mShuffleButton.setImageResource(R.drawable.ic_baseline_shuffle_32_true);
+                Collections.shuffle(mSongs);
+                shuffled = true;
+            }
         }
     }
 
@@ -218,14 +235,14 @@ public class SongDetailFragment extends Fragment implements Playable, View.OnCli
     public void onTrackPrevious() {
         Log.e("buttons", "prev pressed");
         prev();
-        createNotification(requireContext(), mSongs.get(mPlayingNowIndex).get_mSongTitle());
+        createNotification(requireContext(), mSongs.get(mPlayingNowIndex));
     }
 
     @Override
     public void onTrackPlay() {
         Log.e("buttons", "play pressed");
         playOrPause();
-        createNotification(requireContext(), mSongs.get(mPlayingNowIndex).get_mSongTitle());
+        createNotification(requireContext(), mSongs.get(mPlayingNowIndex));
         redrawPlayPauseButton();
     }
 
@@ -233,7 +250,7 @@ public class SongDetailFragment extends Fragment implements Playable, View.OnCli
     public void onTrackPause() {
         Log.e("buttons", "pause pressed");
         playOrPause();
-        createNotification(requireContext(), mSongs.get(mPlayingNowIndex).get_mSongTitle());
+        createNotification(requireContext(), mSongs.get(mPlayingNowIndex));
         redrawPlayPauseButton();
     }
 
@@ -241,7 +258,7 @@ public class SongDetailFragment extends Fragment implements Playable, View.OnCli
     public void onTrackNext() {
         Log.e("buttons", "next pressed");
         next();
-        createNotification(requireContext(), mSongs.get(mPlayingNowIndex).get_mSongTitle());
+        createNotification(requireContext(), mSongs.get(mPlayingNowIndex));
     }
 
     @Override
@@ -266,9 +283,12 @@ public class SongDetailFragment extends Fragment implements Playable, View.OnCli
     }
 
     @SuppressLint("UnspecifiedImmutableFlag")
-    private void createNotification(Context context, String title) {
+    private void createNotification(Context context, SongModel song) {
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
             //MediaSessionCompat mediaSession = new MediaSessionCompat(context, "tag");
+
+            String title = song.get_mSongTitle();
+            String artist = song.get_mArtistName();
 
             PendingIntent pendingIntentPrevious;
             int draw_prev;
@@ -322,6 +342,7 @@ public class SongDetailFragment extends Fragment implements Playable, View.OnCli
                             //.setMediaSession(mediaSession.getSessionToken())
                     )
                     .setContentTitle(title)
+                    .setContentText(artist)
                     .setPriority(NotificationCompat.PRIORITY_LOW); // No sound
 
             NotificationManagerCompat notificationManager = NotificationManagerCompat.from(requireActivity());
@@ -367,7 +388,7 @@ public class SongDetailFragment extends Fragment implements Playable, View.OnCli
         mSongTitle.setSelected(true);
 
         mSongArtistName.setText(play.get_mArtistName());
-        createNotification(requireContext(), play.get_mSongTitle());
+        createNotification(requireContext(), play);
 
         Bitmap art = Utils.decodeSampledBitmapFromResource(
                 Utils.getByteArrayFrom(requireContext(), play), 400, 400);
