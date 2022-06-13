@@ -17,13 +17,14 @@ import android.widget.Toast;
 import androidx.activity.result.ActivityResultLauncher;
 import androidx.activity.result.contract.ActivityResultContracts;
 import androidx.annotation.NonNull;
+import androidx.annotation.Nullable;
 import androidx.appcompat.app.AlertDialog;
 import androidx.appcompat.app.AppCompatActivity;
-import androidx.appcompat.widget.Toolbar;
 import androidx.core.app.NotificationManagerCompat;
 import androidx.core.content.ContextCompat;
 import androidx.lifecycle.ViewModelProvider;
 import androidx.navigation.NavController;
+import androidx.navigation.Navigation;
 
 import com.google.android.material.floatingactionbutton.FloatingActionButton;
 import com.sirhadrian.musicplayer.databinding.ActivityMainBinding;
@@ -42,10 +43,6 @@ import java.util.concurrent.Executors;
 
 public class MainActivity extends AppCompatActivity implements ServiceConnection {
 
-    private NavController mNav;
-
-    private Uri mSearchFolder;
-
     private SharedDataViewModel mSharedData;
     private MainActivityViewModel mMainData;
 
@@ -55,11 +52,6 @@ public class MainActivity extends AppCompatActivity implements ServiceConnection
     // Those values need to survive
     private PlaySongs mService;
     private boolean mBound;
-
-    // FABs
-    private FloatingActionButton masterSwitch;
-    private FloatingActionButton fab1;
-    private boolean isFABOpen;
 
     public static final String bound_key = "BOUND";
 
@@ -88,32 +80,7 @@ public class MainActivity extends AppCompatActivity implements ServiceConnection
         // Data persistence for Service
         mMainData = new ViewModelProvider(this).get(MainActivityViewModel.class);
 
-
-        masterSwitch = binding.masterSwitch;
-        fab1 = binding.fab1;
-
-        masterSwitch.setOnClickListener(view -> {
-            if (!isFABOpen) {
-                showFABMenu();
-                masterSwitch.setImageResource(R.drawable.ic_baseline_expand_less_24);
-            } else {
-                closeFABMenu();
-                masterSwitch.setImageResource(R.drawable.ic_baseline_expand_more_24);
-            }
-        });
-
         setContentView(root);
-    }
-
-    private void closeFABMenu() {
-        isFABOpen = false;
-        fab1.animate().translationY(0);
-    }
-
-    private void showFABMenu() {
-        isFABOpen = true;
-        int base = 140;
-        fab1.animate().translationY(base);
     }
 
     @Override
@@ -153,19 +120,6 @@ public class MainActivity extends AppCompatActivity implements ServiceConnection
                 Toast.makeText(context, "Permission denied", Toast.LENGTH_LONG).show();
             }
         }
-    }
-
-    private void makeScanRequest(Context context, Uri folder, ResultCallback<ArrayList<SongModel>> callback) {
-        ExecutorService executor = Executors.newSingleThreadExecutor();
-        executor.execute(() -> {
-            try {
-                Result<ArrayList<SongModel>> result = new Result.Success<>(Query.getSongsFromFolder(context, folder));
-                callback.onComplete(result);
-            } catch (Exception e) {
-                Result<ArrayList<SongModel>> errorResult = new Result.Error<>(e);
-                callback.onComplete(errorResult);
-            }
-        });
     }
 
     @Override

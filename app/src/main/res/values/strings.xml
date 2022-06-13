@@ -40,5 +40,7 @@
     <string name="background_for_individual_item">Background for individual item</string>
     <string name="shuffle_button">Shuffle button</string>
     <string name="action_switch">action switch</string>
+    <string name="settings_fragment">Settings fragment</string>
+    <string name="scan_directory" />
 
 </resources>
