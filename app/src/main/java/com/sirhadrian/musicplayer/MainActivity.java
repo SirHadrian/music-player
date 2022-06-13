@@ -11,19 +11,23 @@ import android.net.Uri;
 import android.os.Build;
 import android.os.Bundle;
 import android.os.IBinder;
+import android.view.View;
 import android.widget.Toast;
 
 import androidx.activity.result.ActivityResultLauncher;
 import androidx.activity.result.contract.ActivityResultContracts;
 import androidx.annotation.NonNull;
+import androidx.annotation.Nullable;
 import androidx.appcompat.app.AlertDialog;
 import androidx.appcompat.app.AppCompatActivity;
-import androidx.appcompat.widget.Toolbar;
 import androidx.core.app.NotificationManagerCompat;
 import androidx.core.content.ContextCompat;
 import androidx.lifecycle.ViewModelProvider;
 import androidx.navigation.NavController;
+import androidx.navigation.Navigation;
 
+import com.google.android.material.floatingactionbutton.FloatingActionButton;
+import com.sirhadrian.musicplayer.databinding.ActivityMainBinding;
 import com.sirhadrian.musicplayer.model.database.SongModel;
 import com.sirhadrian.musicplayer.services.PlaySongs;
 import com.sirhadrian.musicplayer.ui.SharedDataViewModel;
@@ -39,14 +43,9 @@ import java.util.concurrent.Executors;
 
 public class MainActivity extends AppCompatActivity implements ServiceConnection {
 
-    private NavController mNav;
-
-    private Uri mSearchFolder;
-
     private SharedDataViewModel mSharedData;
     private MainActivityViewModel mMainData;
 
-    private Toolbar mToolBar;
     private ActivityResultLauncher<String> mUserPermission;
 
     // The activity should own the service
@@ -59,7 +58,8 @@ public class MainActivity extends AppCompatActivity implements ServiceConnection
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
-        setContentView(R.layout.activity_main);
+        ActivityMainBinding binding = ActivityMainBinding.inflate(getLayoutInflater());
+        View root = binding.getRoot();
 
         Intent intent = new Intent(this, PlaySongs.class);
         bindService(intent, this, Context.BIND_AUTO_CREATE);
@@ -79,6 +79,8 @@ public class MainActivity extends AppCompatActivity implements ServiceConnection
 
         // Data persistence for Service
         mMainData = new ViewModelProvider(this).get(MainActivityViewModel.class);
+
+        setContentView(root);
     }
 
     @Override
@@ -118,19 +120,6 @@ public class MainActivity extends AppCompatActivity implements ServiceConnection
                 Toast.makeText(context, "Permission denied", Toast.LENGTH_LONG).show();
             }
         }
-    }
-
-    private void makeScanRequest(Context context, Uri folder, ResultCallback<ArrayList<SongModel>> callback) {
-        ExecutorService executor = Executors.newSingleThreadExecutor();
-        executor.execute(() -> {
-            try {
-                Result<ArrayList<SongModel>> result = new Result.Success<>(Query.getSongsFromFolder(context, folder));
-                callback.onComplete(result);
-            } catch (Exception e) {
-                Result<ArrayList<SongModel>> errorResult = new Result.Error<>(e);
-                callback.onComplete(errorResult);
-            }
-        });
     }
 
     @Override

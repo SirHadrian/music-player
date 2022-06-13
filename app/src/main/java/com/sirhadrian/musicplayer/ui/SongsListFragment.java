@@ -39,7 +39,6 @@ public class SongsListFragment extends Fragment implements View.OnClickListener 
     private SharedDataViewModel mSharedData;
 
     private SongsAdapter mSongsAdapter;
-    //private NavController navController;
     private LruCache<String, Bitmap> memoryCache;
 
     //Bottom view
