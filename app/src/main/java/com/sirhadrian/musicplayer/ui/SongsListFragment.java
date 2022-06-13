@@ -3,8 +3,6 @@ package com.sirhadrian.musicplayer.ui;
 import android.annotation.SuppressLint;
 import android.graphics.Bitmap;
 import android.graphics.BitmapFactory;
-import android.net.Uri;
-import android.os.AsyncTask;
 import android.os.Bundle;
 import android.util.LruCache;
 import android.view.LayoutInflater;
@@ -29,6 +27,8 @@ import com.sirhadrian.musicplayer.utils.Utils;
 
 import java.util.ArrayList;
 import java.util.List;
+import java.util.concurrent.ExecutorService;
+import java.util.concurrent.Executors;
 
 import jp.wasabeef.blurry.Blurry;
 
@@ -127,39 +127,42 @@ public class SongsListFragment extends Fragment {
             holder.get_mSongArtistNameTextView().setText(mSongs.get(position).get_mArtistName());
             holder.set_mSongPosition(position);
 
-            Bitmap art = getBitmapFromMemCache(mSongs.get(position).get_mSongTitle());
-            if (art == null) {
-                art = Utils.decodeSampledBitmapFromResource(
-                        Utils.getByteArrayFrom(requireContext(), mSongs.get(position)),
-                        150, 150
-                );
-                // Default artwork
+            ExecutorService executor = Executors.newSingleThreadExecutor();
+            executor.execute(() -> {
+                int position1 = holder.getAdapterPosition();
+                Bitmap art = getBitmapFromMemCache(mSongs.get(position1).get_mSongTitle());
                 if (art == null) {
-                    art = BitmapFactory.decodeResource(getResources(), R.drawable.music_icon_big);
+                    art = Utils.decodeSampledBitmapFromResource(
+                            Utils.getByteArrayFrom(requireContext(), mSongs.get(position1)),
+                            150, 150
+                    );
+                    // Default artwork
+                    if (art == null) {
+                        art = BitmapFactory.decodeResource(getResources(), R.drawable.music_icon_big);
+                    }
+                    addBitmapToMemoryCache(mSongs.get(position1).get_mSongTitle(), art);
                 }
-                addBitmapToMemoryCache(mSongs.get(position).get_mSongTitle(), art);
-            }
 
-            if (art != null) {
-                art = Bitmap.createScaledBitmap(art, 150, 150, false);
-                holder.get_mSmallSongIcon().setImageBitmap(art);
-
-                Blurry.with(requireContext())
-                        .from(art)
-                        .into(holder.get_mItemImageBackground());
-            }
-
-
-//            if (position % 2 == 0) {
-//                holder.get_mRowLayout().setBackgroundColor(getResources().getColor(R.color.bg_dark));
-//            } else {
-//                holder.get_mRowLayout().setBackgroundColor(getResources().getColor(R.color.bg_light));
-//            }
+                if (art != null) {
+                    art = Bitmap.createScaledBitmap(art, 150, 150, false);
+                    setArtFromBackgroundThread(holder, art);
+                }
+            });
         }
 
         @Override
         public int getItemCount() {
             return mSongs.size();
+        }
+
+        private void setArtFromBackgroundThread(SongHolder holder, Bitmap art) {
+            requireActivity().runOnUiThread(() -> {
+                holder.get_mSmallSongIcon().setImageBitmap(art);
+
+                Blurry.with(requireContext())
+                        .from(art)
+                        .into(holder.get_mItemImageBackground());
+            });
         }
 
 
@@ -168,7 +171,6 @@ public class SongsListFragment extends Fragment {
             private final TextView mSongArtistNameTextView;
             private final ImageView mSmallSongIcon;
             private final ImageView mItemImageBackground;
-            private final ConstraintLayout mRowLayout;
             private Integer mSongPosition;
 
             public SongHolder(@NonNull View itemView) {
@@ -177,14 +179,13 @@ public class SongsListFragment extends Fragment {
                 mSongArtistNameTextView = itemView.findViewById(R.id.songArtist);
                 mSmallSongIcon = itemView.findViewById(R.id.small_song_icon);
                 mItemImageBackground = itemView.findViewById(R.id.item_background_image);
-                mRowLayout = itemView.findViewById(R.id.row_constraint);
+                ConstraintLayout mRowLayout = itemView.findViewById(R.id.row_constraint);
                 mRowLayout.setOnClickListener(this);
             }
 
             @Override
             public void onClick(View view) {
                 mSharedData.set_mPlayingNowIndex(get_mSongPosition());
-                //navController.navigate(R.id.action_songsListFragment_to_songDetailFragment);
                 ViewPagerFragment.goToDetail();
             }
 
@@ -211,12 +212,6 @@ public class SongsListFragment extends Fragment {
             public void set_mSongPosition(Integer mSongPosition) {
                 this.mSongPosition = mSongPosition;
             }
-
-            public ConstraintLayout get_mRowLayout() {
-                return mRowLayout;
-            }
-
-
         }
     }
 }

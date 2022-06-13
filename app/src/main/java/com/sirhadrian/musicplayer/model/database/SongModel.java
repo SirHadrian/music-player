@@ -26,8 +26,10 @@ public class SongModel {
     @ColumnInfo(name = "song_uri")
     public String mSongUri;
 
+    @ColumnInfo(name = "song_duration")
     public int mSongDuration;
 
+    @ColumnInfo(name = "song_artist")
     public String mArtistName;
 
     public int get_mSongDuration() {
