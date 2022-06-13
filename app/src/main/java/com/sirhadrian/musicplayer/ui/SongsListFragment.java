@@ -32,7 +32,7 @@ import java.util.concurrent.Executors;
 
 import jp.wasabeef.blurry.Blurry;
 
-public class SongsListFragment extends Fragment {
+public class SongsListFragment extends Fragment implements View.OnClickListener {
 
     private List<SongModel> mSongsList;
 
@@ -42,6 +42,13 @@ public class SongsListFragment extends Fragment {
     //private NavController navController;
     private LruCache<String, Bitmap> memoryCache;
 
+    //Bottom view
+    private ImageView backgroundImage;
+    private ImageView smallIconImage;
+    private TextView songTitle;
+    private TextView artistName;
+    private ConstraintLayout rowLayout;
+
     @SuppressLint("NotifyDataSetChanged")
     @Nullable
     @Override
@@ -50,6 +57,12 @@ public class SongsListFragment extends Fragment {
 
         FragmentSongsListBinding binding = FragmentSongsListBinding.inflate(inflater, container, false);
         View view = binding.getRoot();
+
+        backgroundImage = binding.itemBackgroundImage;
+        smallIconImage = binding.smallSongIcon;
+        songTitle = binding.songTitle;
+        artistName = binding.songArtist;
+        rowLayout = binding.bottomRow;
 
         mSongsList = new ArrayList<>();
 
@@ -67,10 +80,13 @@ public class SongsListFragment extends Fragment {
             mSongsAdapter.notifyDataSetChanged();
         });
 
+        mSharedData.get_mPlayingNowIndex().observe(getViewLifecycleOwner(),
+                position -> displayPlayingNowIndexAtBottom(position));
+
         final int maxMemory = (int) (Runtime.getRuntime().maxMemory() / 1024);
 
-        // Use 1/8th of the available memory for this memory cache.
-        final int cacheSize = maxMemory / 8;
+        // Use 1/4th of the available memory for this memory cache.
+        final int cacheSize = maxMemory / 4;
 
         memoryCache = new LruCache<String, Bitmap>(cacheSize) {
             @Override
@@ -83,6 +99,39 @@ public class SongsListFragment extends Fragment {
 
 
         return view;
+    }
+
+    private void displayPlayingNowIndexAtBottom(Integer position) {
+        SongModel currentPlaying = mSongsList.get(position);
+
+        songTitle.setText(currentPlaying.get_mSongTitle());
+        artistName.setText(currentPlaying.get_mArtistName());
+
+        Bitmap art = Utils.decodeSampledBitmapFromResource(
+                Utils.getByteArrayFrom(requireContext(),currentPlaying),
+                150, 150
+        );
+        // Default artwork
+        if (art == null) {
+            art = BitmapFactory.decodeResource(getResources(), R.drawable.music_icon_big);
+        }
+        art = Bitmap.createScaledBitmap(art, 150, 150, false);
+        smallIconImage.setImageBitmap(art);
+
+        Blurry.with(requireContext())
+                .from(art)
+                .into(backgroundImage);
+        rowLayout.setVisibility(View.VISIBLE);
+        rowLayout.setOnClickListener(this);
+
+    }
+
+    @Override
+    public void onClick(View view) {
+        int itemId = view.getId();
+        if (itemId == R.id.bottom_row) {
+            ViewPagerFragment.goToDetail();
+        }
     }
 
     public void addBitmapToMemoryCache(String key, Bitmap bitmap) {

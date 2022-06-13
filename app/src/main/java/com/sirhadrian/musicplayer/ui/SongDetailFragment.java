@@ -40,6 +40,7 @@ import com.sirhadrian.musicplayer.utils.Utils;
 
 import java.util.ArrayList;
 import java.util.Collections;
+import java.util.Objects;
 
 import jp.wasabeef.blurry.Blurry;
 
@@ -138,14 +139,14 @@ public class SongDetailFragment extends Fragment implements Playable, View.OnCli
         mSharedData.get_mSongsList().observe(getViewLifecycleOwner(), songs -> {
             if (shuffled) return;
             mSongs = songs;
-            if (mPlayingNowIndex != null && firstStart) {
+            if (firstStart) {
                 playSong(mSongs.get(mPlayingNowIndex), true);
                 firstStart = false;
             }
         });
         mSharedData.get_mPlayingNowIndex().observe(getViewLifecycleOwner(), position -> {
-            mPlayingNowIndex = position;
-            if (mPlayingNowIndex != null) {
+            if (!Objects.equals(mPlayingNowIndex, position)) {
+                mPlayingNowIndex = position;
                 playSong(mSongs.get(mPlayingNowIndex), false);
                 redrawPlayPauseButton();
                 createNotification(requireContext(), mSongs.get(mPlayingNowIndex));
@@ -216,16 +217,18 @@ public class SongDetailFragment extends Fragment implements Playable, View.OnCli
 
     public void prev() {
         if (mPlayingNowIndex - 1 >= 0) {
-            mPlayingNowIndex -= 1;
-            playSong(mSongs.get(mPlayingNowIndex), false);
+            int now = mPlayingNowIndex - 1;
+            mSharedData.set_mPlayingNowIndex(now);
+            playSong(mSongs.get(now), false);
             redrawPlayPauseButton();
         }
     }
 
     public void next() {
         if (mPlayingNowIndex + 1 < mSongs.size()) {
-            mPlayingNowIndex += 1;
-            playSong(mSongs.get(mPlayingNowIndex), false);
+            int now = mPlayingNowIndex + 1;
+            mSharedData.set_mPlayingNowIndex(now);
+            playSong(mSongs.get(now), false);
             redrawPlayPauseButton();
         }
     }
