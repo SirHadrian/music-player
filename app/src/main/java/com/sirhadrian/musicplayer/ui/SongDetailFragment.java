@@ -10,7 +10,6 @@ import android.content.Intent;
 import android.content.IntentFilter;
 import android.graphics.Bitmap;
 import android.media.MediaPlayer;
-import android.net.Uri;
 import android.os.Build;
 import android.os.Bundle;
 import android.os.Handler;
@@ -34,15 +33,15 @@ import com.sirhadrian.musicplayer.databinding.FragmentSongDetailBinding;
 import com.sirhadrian.musicplayer.model.database.SongModel;
 import com.sirhadrian.musicplayer.services.NotificationActionService;
 import com.sirhadrian.musicplayer.services.OnClearFromRecentService;
-import com.sirhadrian.musicplayer.settings.SettingsViewModel;
 import com.sirhadrian.musicplayer.ui.main.MainActivityViewModel;
 import com.sirhadrian.musicplayer.utils.Playable;
-import com.sirhadrian.musicplayer.utils.Query;
 import com.sirhadrian.musicplayer.utils.Utils;
 
 import java.util.ArrayList;
-import java.util.Collections;
+import java.util.EmptyStackException;
 import java.util.Objects;
+import java.util.Random;
+import java.util.Stack;
 
 import jp.wasabeef.blurry.Blurry;
 
@@ -71,8 +70,7 @@ public class SongDetailFragment extends Fragment implements Playable, View.OnCli
     private TextView endPosition;
     private TextView startPosition;
 
-    private Uri mFolder = null;
-    private SettingsViewModel mSettings;
+    private Stack<Integer> mPrevSongsShuffleOn;
 
     // For blurry
     private ImageView mBlurBackground;
@@ -92,7 +90,7 @@ public class SongDetailFragment extends Fragment implements Playable, View.OnCli
         View root = binding.getRoot();
 
         mServiceBound = new ViewModelProvider(requireActivity()).get(MainActivityViewModel.class);
-        mSettings = new ViewModelProvider(requireActivity()).get(SettingsViewModel.class);
+
 
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
             createNotificationChannel();
@@ -160,7 +158,6 @@ public class SongDetailFragment extends Fragment implements Playable, View.OnCli
             redrawPlayPauseButton();
             createNotification(requireContext(), mSongs.get(mPlayingNowIndex));
         });
-        mSettings.get_mDirPath().observe(getViewLifecycleOwner(), folder -> this.mFolder = folder);
 
         return root;
     }
@@ -206,19 +203,19 @@ public class SongDetailFragment extends Fragment implements Playable, View.OnCli
                 mShuffleButton.setImageResource(R.drawable.ic_baseline_shuffle_24);
                 shuffled = false;
 
-                if (mFolder == null) {
-                    mSharedData.loadSongs(Query.getAllAudioFromDevice(requireContext(), null));
-                } else {
-                    mSharedData.loadSongs(Query.getSongsFromFolder(requireContext(), mFolder));
-                }
+                mPrevSongsShuffleOn = null;
             } else {
                 mShuffleButton.setImageResource(R.drawable.ic_baseline_shuffle_32_true);
                 shuffled = true;
 
-                Collections.shuffle(mSongs);
-                mSharedData.loadSongs(mSongs);
+                mPrevSongsShuffleOn = new Stack<>();
             }
         }
+    }
+
+    public int getRandomNumberUsingNextInt(int min, int max) {
+        Random random = new Random();
+        return random.nextInt(max - min) + min;
     }
 
     private void redrawPlayPauseButton() {
@@ -230,21 +227,32 @@ public class SongDetailFragment extends Fragment implements Playable, View.OnCli
     }
 
     public void prev() {
-        if (mPlayingNowIndex - 1 >= 0) {
+        if (shuffled && mPrevSongsShuffleOn != null) {
+            try {
+                mPlayingNowIndex = mPrevSongsShuffleOn.pop();
+            } catch (EmptyStackException e) {
+                e.printStackTrace();
+                return;
+            }
+        } else if (mPlayingNowIndex - 1 >= 0) {
             mPlayingNowIndex -= 1;
-            playSong(mSongs.get(mPlayingNowIndex), false);
-            redrawPlayPauseButton();
-            mSharedData.set_mPlayingNowIndex(mPlayingNowIndex);
         }
+        playSong(mSongs.get(mPlayingNowIndex), false);
+        redrawPlayPauseButton();
+        mSharedData.set_mPlayingNowIndex(mPlayingNowIndex);
     }
 
     public void next() {
-        if (mPlayingNowIndex + 1 < mSongs.size()) {
+        if (shuffled && mPrevSongsShuffleOn != null) {
+            mPrevSongsShuffleOn.add(mPlayingNowIndex);
+            mPlayingNowIndex = getRandomNumberUsingNextInt(0, mSongs.size());
+        } else if (mPlayingNowIndex + 1 < mSongs.size()) {
             mPlayingNowIndex += 1;
-            playSong(mSongs.get(mPlayingNowIndex), false);
-            redrawPlayPauseButton();
-            mSharedData.set_mPlayingNowIndex(mPlayingNowIndex);
         }
+        playSong(mSongs.get(mPlayingNowIndex), false);
+        redrawPlayPauseButton();
+        mSharedData.set_mPlayingNowIndex(mPlayingNowIndex);
+
     }
 
     public void playOrPause() {

@@ -1,6 +1,5 @@
 package com.sirhadrian.musicplayer.ui.viewpager;
 
-import android.content.Context;
 import android.net.Uri;
 import android.os.Bundle;
 import android.view.LayoutInflater;
@@ -10,6 +9,7 @@ import android.view.ViewGroup;
 import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
 import androidx.fragment.app.Fragment;
+import androidx.lifecycle.ViewModelProvider;
 import androidx.navigation.NavController;
 import androidx.navigation.Navigation;
 import androidx.viewpager2.adapter.FragmentStateAdapter;
@@ -19,16 +19,17 @@ import com.google.android.material.floatingactionbutton.FloatingActionButton;
 import com.sirhadrian.musicplayer.R;
 import com.sirhadrian.musicplayer.databinding.FragmentViewpagerBinding;
 import com.sirhadrian.musicplayer.model.database.SongModel;
+import com.sirhadrian.musicplayer.settings.SettingsViewModel;
+import com.sirhadrian.musicplayer.ui.SharedDataViewModel;
 import com.sirhadrian.musicplayer.ui.SongDetailFragment;
 import com.sirhadrian.musicplayer.ui.SongsListFragment;
 import com.sirhadrian.musicplayer.utils.Query;
-import com.sirhadrian.musicplayer.utils.Result;
-import com.sirhadrian.musicplayer.utils.ResultCallback;
 
+import java.text.CollationElementIterator;
 import java.util.ArrayList;
+import java.util.Collections;
 import java.util.List;
-import java.util.concurrent.ExecutorService;
-import java.util.concurrent.Executors;
+import java.util.Objects;
 
 public class ViewPagerFragment extends Fragment {
 
@@ -36,14 +37,20 @@ public class ViewPagerFragment extends Fragment {
     private FragmentStateAdapter mFragmentStateAdapter;
     private static ViewPager2 mFragmentViewPager;
 
+    // Folder picker
+    private Uri mFolder = null;
+    private SettingsViewModel mSettings;
+    private SharedDataViewModel mSharedData;
+    private ArrayList<SongModel> mSongs;
+
     // FABs
     private FloatingActionButton mMasterSwitch;
     private FloatingActionButton mFabSettings;
+    private FloatingActionButton mFabShuffle;
     private boolean isFABOpen;
     private static boolean settingsOpen = false;
 
     private NavController mNavCtrl;
-
 
     @Nullable
     @Override
@@ -52,6 +59,16 @@ public class ViewPagerFragment extends Fragment {
 
         FragmentViewpagerBinding binding = FragmentViewpagerBinding.inflate(getLayoutInflater());
         View root = binding.getRoot();
+
+        mSettings = new ViewModelProvider(requireActivity()).get(SettingsViewModel.class);
+        mSharedData = new ViewModelProvider(requireActivity()).get(SharedDataViewModel.class);
+
+        mSettings.get_mDirPath().observe(getViewLifecycleOwner(), folder -> {
+            if (folder == null) return;
+            this.mFolder = folder;
+            mSongs = Query.getSongsFromFolder(requireContext(), folder);
+            mSharedData.loadSongs(mSongs);
+        });
 
         mFragmentViewPager = binding.fragmentViewPager2;
         mViewPagerFragments = new ArrayList<>();
@@ -68,6 +85,15 @@ public class ViewPagerFragment extends Fragment {
 
         mMasterSwitch = binding.masterSwitch;
         mFabSettings = binding.fabSettings;
+        mFabShuffle = binding.fabShuffleSongs;
+
+        mFabShuffle.setOnClickListener(view -> {
+            mSongs = mSharedData.get_mSongsList().getValue();
+            if (mSongs != null) {
+                Collections.shuffle(mSongs);
+                mSharedData.loadSongs(mSongs);
+            }
+        });
 
         mFabSettings.setOnClickListener(view -> {
             mNavCtrl.navigate(R.id.action_viewPagerFragment_to_settingsFragment2);
@@ -102,12 +128,14 @@ public class ViewPagerFragment extends Fragment {
     private void closeFABMenu() {
         isFABOpen = false;
         mFabSettings.animate().translationY(0);
+        mFabShuffle.animate().translationY(0);
     }
 
     private void showFABMenu() {
         isFABOpen = true;
-        int base = 140;
+        int base = 100;
         mFabSettings.animate().translationY(base);
+        mFabShuffle.animate().translationY(base * 2);
     }
 
     public static void goToDetail() {
@@ -120,7 +148,7 @@ public class ViewPagerFragment extends Fragment {
         if (mFragmentViewPager.getCurrentItem() == 0) {
             return true;
         }
-        if(settingsOpen){
+        if (settingsOpen) {
             settingsOpen = false;
             return true;
         }

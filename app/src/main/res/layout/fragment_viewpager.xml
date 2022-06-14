@@ -15,7 +15,21 @@
         app:layout_constraintTop_toTopOf="parent" />
 
     <com.google.android.material.floatingactionbutton.FloatingActionButton
+        android:id="@+id/fab_shuffle_songs"
+        app:fabSize="mini"
+        android:contentDescription="@string/shuffle_the_list_of_songs"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:backgroundTint="@color/fabBackgroud"
+        app:backgroundTint="@color/white"
+        android:layout_margin="10dp"
+        app:layout_constraintEnd_toEndOf="parent"
+        app:layout_constraintTop_toTopOf="parent"
+        app:srcCompat="@drawable/ic_baseline_shuffle_24" />
+
+    <com.google.android.material.floatingactionbutton.FloatingActionButton
         android:id="@+id/fab_settings"
+        app:fabSize="mini"
         android:contentDescription="@string/settings_fragment"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
@@ -28,6 +42,7 @@
 
     <com.google.android.material.floatingactionbutton.FloatingActionButton
         android:contentDescription="@string/action_switch"
+        app:fabSize="mini"
         android:id="@+id/master_switch"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
