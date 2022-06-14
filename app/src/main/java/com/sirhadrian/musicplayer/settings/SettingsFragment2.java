@@ -6,9 +6,7 @@ import android.content.Context;
 import android.content.Intent;
 import android.net.Uri;
 import android.os.Bundle;
-import android.util.Log;
 
-import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
 import androidx.lifecycle.ViewModelProvider;
 import androidx.preference.Preference;
@@ -32,16 +30,14 @@ public class SettingsFragment2 extends PreferenceFragmentCompat {
     private Preference mScanDirectory;
     private Preference mScanButton;
 
-    private SettingsViewModel settingsViewModel;
     private SharedDataViewModel mSharedData;
 
-    private Uri mFolder;
+    private String mFolder;
 
     @Override
     public void onCreatePreferences(Bundle savedInstanceState, String rootKey) {
         setPreferencesFromResource(R.xml.root_preferences, rootKey);
 
-        settingsViewModel = new ViewModelProvider(requireActivity()).get(SettingsViewModel.class);
         mSharedData = new ViewModelProvider(requireActivity()).get(SharedDataViewModel.class);
 
         // Action Buttons
@@ -82,8 +78,7 @@ public class SettingsFragment2 extends PreferenceFragmentCompat {
             assert data != null;
             Uri path = data.getData();
             mScanDirectory.setSummary(path.toString());
-            mFolder = path;
-            settingsViewModel.set_mDirPath(mFolder);
+            mFolder = Query.findFullPath(path.getPath());
             mScanButton.setEnabled(true);
         }
     }
@@ -93,11 +88,11 @@ public class SettingsFragment2 extends PreferenceFragmentCompat {
         super.onResume();
     }
 
-    private void makeScanRequest(Context context, Uri folder, ResultCallback<ArrayList<SongModel>> callback) {
+    private void makeScanRequest(Context context, String folder, ResultCallback<ArrayList<SongModel>> callback) {
         ExecutorService executor = Executors.newSingleThreadExecutor();
         executor.execute(() -> {
             try {
-                Result<ArrayList<SongModel>> result = new Result.Success<>(Query.getSongsFromFolder(context, folder));
+                Result<ArrayList<SongModel>> result = new Result.Success<>(Query.getAllAudioFromDevice(context, folder));
                 callback.onComplete(result);
             } catch (Exception e) {
                 Result<ArrayList<SongModel>> errorResult = new Result.Error<>(e);

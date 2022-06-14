@@ -7,8 +7,6 @@ import androidx.lifecycle.ViewModel;
 import com.sirhadrian.musicplayer.model.database.SongModel;
 
 import java.util.ArrayList;
-import java.util.Collections;
-import java.util.List;
 
 public class SharedDataViewModel extends ViewModel {
 

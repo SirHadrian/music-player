@@ -26,27 +26,41 @@ public class Query {
         DocumentFile[] filesInDir = dir.listFiles();
 
         for (DocumentFile file : filesInDir) {
-            songs.add(new SongModel(file.getName(),"", file.getUri().toString(), 0));
+            songs.add(new SongModel(file.getName(), "", file.getUri().toString(), 0));
         }
 
         return songs;
     }
 
-    private static String getRealPathFromURI(final Context context, Uri contentUri) {
-        String[] proj = {MediaStore.Images.Media.DATA};
-        try (Cursor cursor = context.getApplicationContext().getContentResolver().query(contentUri, proj, null, null, null)) {
-            if (cursor == null) {
-                return contentUri.getPath();
+    public static String findFullPath(String path) {
+        String actualResult;
+        path=path.substring(5);
+        int index=0;
+        StringBuilder result = new StringBuilder("/storage");
+        for (int i = 0; i < path.length(); i++) {
+            if (path.charAt(i) != ':') {
+                result.append(path.charAt(i));
+            } else {
+                index = ++i;
+                result.append('/');
+                break;
             }
-            int column_index = cursor.getColumnIndexOrThrow(MediaStore.Images.Media.DATA);
-            cursor.moveToFirst();
-            return cursor.getString(column_index);
         }
+        for (int i = index; i < path.length(); i++) {
+            result.append(path.charAt(i));
+        }
+        if (result.substring(9, 16).equalsIgnoreCase("primary")) {
+            actualResult = result.substring(0, 8) + "/emulated/0/" + result.substring(17);
+        } else {
+            actualResult = result.toString();
+        }
+        return actualResult;
     }
 
-    public static ArrayList<SongModel> getAllAudioFromDevice(final Context context, Uri folderName) {
+    public static ArrayList<SongModel> getAllAudioFromDevice(final Context context, String folderName) {
         ArrayList<SongModel> songs = new ArrayList<>();
-        String testFolder = "/storage/44A6-B704/Documents/C_E_M";
+        //String testFolder = "/storage/44A6-B704/Documents/V_E_M";
+
 
         Uri collection;
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.Q) {
@@ -61,7 +75,10 @@ public class Query {
                 MediaStore.Audio.Media.ARTIST,
                 MediaStore.Audio.Media.DURATION
         };
-        String selection = MediaStore.Audio.Media.DATA + " like ? ";
+        String selection = null;
+        if (folderName != null) {
+            selection = MediaStore.Audio.Media.DATA + " like ? ";
+        }
 
         String[] selectionArgs = null;
         if (folderName != null) {
@@ -71,7 +88,7 @@ public class Query {
         try (Cursor cursor = context.getApplicationContext().getContentResolver().query(
                 collection,
                 projection,
-                null,
+                selection,
                 selectionArgs,
                 null
         )) {
@@ -94,7 +111,7 @@ public class Query {
                 assert contentUri != null;
                 // Stores column values and the contentUri in a local object
                 // that represents the media file.
-                songs.add(new SongModel(title, artist,  contentUri.toString(), duration));
+                songs.add(new SongModel(title, artist, contentUri.toString(), duration));
             }
         }
         return songs;

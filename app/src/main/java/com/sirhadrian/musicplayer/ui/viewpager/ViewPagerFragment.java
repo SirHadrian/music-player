@@ -1,6 +1,5 @@
 package com.sirhadrian.musicplayer.ui.viewpager;
 
-import android.net.Uri;
 import android.os.Bundle;
 import android.view.LayoutInflater;
 import android.view.View;
@@ -19,17 +18,13 @@ import com.google.android.material.floatingactionbutton.FloatingActionButton;
 import com.sirhadrian.musicplayer.R;
 import com.sirhadrian.musicplayer.databinding.FragmentViewpagerBinding;
 import com.sirhadrian.musicplayer.model.database.SongModel;
-import com.sirhadrian.musicplayer.settings.SettingsViewModel;
 import com.sirhadrian.musicplayer.ui.SharedDataViewModel;
 import com.sirhadrian.musicplayer.ui.SongDetailFragment;
 import com.sirhadrian.musicplayer.ui.SongsListFragment;
-import com.sirhadrian.musicplayer.utils.Query;
 
-import java.text.CollationElementIterator;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
-import java.util.Objects;
 
 public class ViewPagerFragment extends Fragment {
 
@@ -37,9 +32,6 @@ public class ViewPagerFragment extends Fragment {
     private FragmentStateAdapter mFragmentStateAdapter;
     private static ViewPager2 mFragmentViewPager;
 
-    // Folder picker
-    private Uri mFolder = null;
-    private SettingsViewModel mSettings;
     private SharedDataViewModel mSharedData;
     private ArrayList<SongModel> mSongs;
 
@@ -60,15 +52,7 @@ public class ViewPagerFragment extends Fragment {
         FragmentViewpagerBinding binding = FragmentViewpagerBinding.inflate(getLayoutInflater());
         View root = binding.getRoot();
 
-        mSettings = new ViewModelProvider(requireActivity()).get(SettingsViewModel.class);
         mSharedData = new ViewModelProvider(requireActivity()).get(SharedDataViewModel.class);
-
-        mSettings.get_mDirPath().observe(getViewLifecycleOwner(), folder -> {
-            if (folder == null) return;
-            this.mFolder = folder;
-            mSongs = Query.getSongsFromFolder(requireContext(), folder);
-            mSharedData.loadSongs(mSongs);
-        });
 
         mFragmentViewPager = binding.fragmentViewPager2;
         mViewPagerFragments = new ArrayList<>();
