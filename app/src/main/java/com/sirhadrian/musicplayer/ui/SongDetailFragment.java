@@ -216,11 +216,6 @@ public class SongDetailFragment extends Fragment implements Playable, View.OnCli
         }
     }
 
-    public int getRandomNumberUsingNextInt(int min, int max) {
-        Random random = new Random();
-        return random.nextInt(max - min) + min;
-    }
-
     private void redrawPlayPauseButton() {
         if (isPlaying) {
             mPlayPauseButton.setImageResource(R.drawable.ic_baseline_pause_circle_outline_24);
@@ -248,7 +243,7 @@ public class SongDetailFragment extends Fragment implements Playable, View.OnCli
     public void next() {
         if (shuffled && mPrevSongsShuffleOn != null) {
             mPrevSongsShuffleOn.add(mPlayingNowIndex);
-            mPlayingNowIndex = getRandomNumberUsingNextInt(0, mSongs.size());
+            mPlayingNowIndex = Utils.getRandomNumberUsingNextInt(mPlayingNowIndex, 0, mSongs.size());
         } else if (mPlayingNowIndex + 1 < mSongs.size()) {
             mPlayingNowIndex += 1;
         } else return;

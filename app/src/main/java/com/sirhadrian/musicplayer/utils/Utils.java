@@ -9,6 +9,7 @@ import android.net.Uri;
 
 import com.sirhadrian.musicplayer.model.database.SongModel;
 
+import java.util.Random;
 import java.util.concurrent.TimeUnit;
 
 public class Utils {
@@ -18,6 +19,15 @@ public class Utils {
         return String.format("%02d:%02d",
                 TimeUnit.MILLISECONDS.toMinutes(millis) % TimeUnit.HOURS.toMinutes(1),
                 TimeUnit.MILLISECONDS.toSeconds(millis) % TimeUnit.MINUTES.toSeconds(1));
+    }
+
+    public static int getRandomNumberUsingNextInt(int exclude, int min, int max) {
+        Random random = new Random();
+        int next = random.nextInt(max - min) + min;
+        if (next == exclude) {
+            next = getRandomNumberUsingNextInt(exclude, min, max);
+        }
+        return next;
     }
 
     public static byte[] getByteArrayFrom(Context context, SongModel song) {
