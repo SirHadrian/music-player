@@ -96,7 +96,6 @@ public class Query {
             int idColumn = cursor.getColumnIndexOrThrow(MediaStore.Audio.Media._ID);
             int titleColumn = cursor.getColumnIndexOrThrow(MediaStore.Audio.Media.TITLE);
             int artistColumn = cursor.getColumnIndexOrThrow(MediaStore.Audio.Media.ARTIST);
-
             int durationColumn = cursor.getColumnIndexOrThrow(MediaStore.Audio.Media.DURATION);
 
             while (cursor.moveToNext()) {

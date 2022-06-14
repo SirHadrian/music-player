@@ -47,6 +47,7 @@ public class SongsListFragment extends Fragment implements View.OnClickListener 
     private TextView songTitle;
     private TextView artistName;
     private ConstraintLayout rowLayout;
+    private TextView mIndexAndTotal;
 
     @SuppressLint("NotifyDataSetChanged")
     @Nullable
@@ -62,6 +63,7 @@ public class SongsListFragment extends Fragment implements View.OnClickListener 
         songTitle = binding.songTitle;
         artistName = binding.songArtist;
         rowLayout = binding.bottomRow;
+        mIndexAndTotal = binding.indexAndTotal;
 
         mSongsList = new ArrayList<>();
 
@@ -103,11 +105,13 @@ public class SongsListFragment extends Fragment implements View.OnClickListener 
     private void displayPlayingNowIndexAtBottom(Integer position) {
         SongModel currentPlaying = mSongsList.get(position);
 
+        mIndexAndTotal.setText(String.format("%s/%s", position + 1, mSongsList.size()));
+
         songTitle.setText(currentPlaying.get_mSongTitle());
         artistName.setText(currentPlaying.get_mArtistName());
 
         Bitmap art = Utils.decodeSampledBitmapFromResource(
-                Utils.getByteArrayFrom(requireContext(),currentPlaying),
+                Utils.getByteArrayFrom(requireContext(), currentPlaying),
                 150, 150
         );
         // Default artwork
@@ -171,6 +175,7 @@ public class SongsListFragment extends Fragment implements View.OnClickListener 
             holder.get_mSongTitle().setSelected(true);
             holder.get_mSongArtistNameTextView().setText(mSongs.get(position).get_mArtistName());
             holder.set_mSongPosition(position);
+            holder.get_mSongDuration().setText(Utils.convertToMMSS(String.valueOf(mSongs.get(position).get_mSongDuration())));
 
             processBitmapInBackground(holder);
         }
@@ -216,18 +221,20 @@ public class SongsListFragment extends Fragment implements View.OnClickListener 
 
 
         private class SongHolder extends RecyclerView.ViewHolder implements View.OnClickListener {
-            private final TextView mSongTitleTextView;
-            private final TextView mSongArtistNameTextView;
+            private final TextView mSongTitle;
+            private final TextView mSongArtistName;
+            private final TextView mSongDuration;
             private final ImageView mSmallSongIcon;
             private final ImageView mItemImageBackground;
             private Integer mSongPosition;
 
             public SongHolder(@NonNull View itemView) {
                 super(itemView);
-                mSongTitleTextView = itemView.findViewById(R.id.songTitle);
-                mSongArtistNameTextView = itemView.findViewById(R.id.songArtist);
+                mSongTitle = itemView.findViewById(R.id.songTitle);
+                mSongArtistName = itemView.findViewById(R.id.songArtist);
                 mSmallSongIcon = itemView.findViewById(R.id.small_song_icon);
                 mItemImageBackground = itemView.findViewById(R.id.item_background_image);
+                mSongDuration = itemView.findViewById(R.id.song_duration);
                 ConstraintLayout mRowLayout = itemView.findViewById(R.id.row_constraint);
                 mRowLayout.setOnClickListener(this);
             }
@@ -239,7 +246,11 @@ public class SongsListFragment extends Fragment implements View.OnClickListener 
             }
 
             public TextView get_mSongTitle() {
-                return mSongTitleTextView;
+                return mSongTitle;
+            }
+
+            public TextView get_mSongDuration() {
+                return mSongDuration;
             }
 
             public ImageView get_mItemImageBackground() {
@@ -247,7 +258,7 @@ public class SongsListFragment extends Fragment implements View.OnClickListener 
             }
 
             public TextView get_mSongArtistNameTextView() {
-                return mSongArtistNameTextView;
+                return mSongArtistName;
             }
 
             public ImageView get_mSmallSongIcon() {
