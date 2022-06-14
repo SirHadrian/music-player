@@ -9,6 +9,7 @@ import android.content.Context;
 import android.content.Intent;
 import android.content.IntentFilter;
 import android.graphics.Bitmap;
+import android.graphics.BitmapFactory;
 import android.media.MediaPlayer;
 import android.os.Build;
 import android.os.Bundle;
@@ -236,7 +237,7 @@ public class SongDetailFragment extends Fragment implements Playable, View.OnCli
             }
         } else if (mPlayingNowIndex - 1 >= 0) {
             mPlayingNowIndex -= 1;
-        }
+        } else return;
         playSong(mSongs.get(mPlayingNowIndex), false);
         redrawPlayPauseButton();
         mSharedData.set_mPlayingNowIndex(mPlayingNowIndex);
@@ -248,7 +249,7 @@ public class SongDetailFragment extends Fragment implements Playable, View.OnCli
             mPlayingNowIndex = getRandomNumberUsingNextInt(0, mSongs.size());
         } else if (mPlayingNowIndex + 1 < mSongs.size()) {
             mPlayingNowIndex += 1;
-        }
+        } else return;
         playSong(mSongs.get(mPlayingNowIndex), false);
         redrawPlayPauseButton();
         mSharedData.set_mPlayingNowIndex(mPlayingNowIndex);
@@ -326,7 +327,7 @@ public class SongDetailFragment extends Fragment implements Playable, View.OnCli
 
             PendingIntent pendingIntentPrevious;
             int draw_prev;
-            if (mPlayingNowIndex - 1 == 0) {
+            if (mPlayingNowIndex == 0) {
                 pendingIntentPrevious = null;
                 draw_prev = 0;
             } else {
@@ -377,7 +378,9 @@ public class SongDetailFragment extends Fragment implements Playable, View.OnCli
                     )
                     .setContentTitle(title)
                     .setContentText(artist)
-                    .setPriority(NotificationCompat.PRIORITY_MIN); // No sound
+                    .setSilent(true) // No sound
+                    .setVisibility(NotificationCompat.VISIBILITY_PUBLIC)
+                    .setPriority(NotificationCompat.PRIORITY_LOW);
 
             NotificationManagerCompat notificationManager = NotificationManagerCompat.from(requireActivity());
 
@@ -426,13 +429,16 @@ public class SongDetailFragment extends Fragment implements Playable, View.OnCli
 
         Bitmap art = Utils.decodeSampledBitmapFromResource(
                 Utils.getByteArrayFrom(requireContext(), play), 400, 400);
-        if (art != null) {
-            mArtImageView.setImageBitmap(art);
-            // Blur the background view with the bitmap
-            Blurry.with(requireContext())
-                    .from(art)
-                    .into(mBlurBackground);
+        // Default artwork
+        if (art == null) {
+            art = BitmapFactory.decodeResource(getResources(), R.drawable.music_icon_big);
         }
+        mArtImageView.setImageBitmap(art);
+        // Blur the background view with the bitmap
+        Blurry.with(requireContext())
+                .from(art)
+                .into(mBlurBackground);
+
     }
 
     private void playSong(SongModel play, boolean justInitSong) {
