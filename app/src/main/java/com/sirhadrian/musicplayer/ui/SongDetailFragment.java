@@ -10,6 +10,7 @@ import android.content.Intent;
 import android.content.IntentFilter;
 import android.graphics.Bitmap;
 import android.graphics.BitmapFactory;
+import android.media.Image;
 import android.media.MediaPlayer;
 import android.os.Build;
 import android.os.Bundle;
@@ -43,6 +44,8 @@ import java.util.EmptyStackException;
 import java.util.Objects;
 import java.util.Random;
 import java.util.Stack;
+import java.util.concurrent.ExecutorService;
+import java.util.concurrent.Executors;
 
 import jp.wasabeef.blurry.Blurry;
 
@@ -145,7 +148,6 @@ public class SongDetailFragment extends Fragment implements Playable, View.OnCli
 
         mSharedData = new ViewModelProvider(requireActivity()).get(SharedDataViewModel.class);
         mSharedData.get_mSongsList().observe(getViewLifecycleOwner(), songs -> {
-            if (shuffled) return;
             mSongs = songs;
             if (firstStart) {
                 playSong(mSongs.get(mPlayingNowIndex), true);
@@ -153,7 +155,7 @@ public class SongDetailFragment extends Fragment implements Playable, View.OnCli
             }
         });
         mSharedData.get_mPlayingNowIndex().observe(getViewLifecycleOwner(), position -> {
-            if (Objects.equals(position, mPlayingNowIndex)) return;
+            if (Objects.equals(position, mPlayingNowIndex) && mPlayingNowIndex != 0) return;
             mPlayingNowIndex = position;
             playSong(mSongs.get(mPlayingNowIndex), false);
             redrawPlayPauseButton();
@@ -423,22 +425,29 @@ public class SongDetailFragment extends Fragment implements Playable, View.OnCli
     private void displayCurrentSong(SongModel play) {
         mSongTitle.setText(play.get_mSongTitle());
         mSongTitle.setSelected(true);
-
         mSongArtistName.setText(play.get_mArtistName());
         createNotification(requireContext(), play);
 
-        Bitmap art = Utils.decodeSampledBitmapFromResource(
-                Utils.getByteArrayFrom(requireContext(), play), 400, 400);
-        // Default artwork
-        if (art == null) {
-            art = BitmapFactory.decodeResource(getResources(), R.drawable.music_icon_big);
-        }
-        mArtImageView.setImageBitmap(art);
-        // Blur the background view with the bitmap
-        Blurry.with(requireContext())
-                .from(art)
-                .into(mBlurBackground);
+        ExecutorService executor = Executors.newSingleThreadExecutor();
+        executor.execute(() -> {
+            Bitmap art = Utils.decodeSampledBitmapFromResource(
+                    Utils.getByteArrayFrom(requireContext(), play), 400, 400);
+            // Default artwork
+            if (art == null) {
+                art = BitmapFactory.decodeResource(getResources(), R.drawable.music_icon_big);
+            }
+            setArtFromBackgroundThread(mArtImageView, mBlurBackground, art);
+        });
 
+    }
+
+    private void setArtFromBackgroundThread(ImageView image, ImageView background, Bitmap art) {
+        requireActivity().runOnUiThread(() -> {
+            image.setImageBitmap(art);
+            Blurry.with(requireContext())
+                    .from(art)
+                    .into(background);
+        });
     }
 
     private void playSong(SongModel play, boolean justInitSong) {
