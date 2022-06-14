@@ -53,7 +53,10 @@ public class SongDetailFragment extends Fragment implements Playable, View.OnCli
     private ImageView mArtImageView;
 
     private ArrayList<SongModel> mSongs;
+
+    // Shared directly with songs list
     private Integer mPlayingNowIndex = 0;
+
     private boolean isPlaying = false;
     private ImageView mPlayPauseButton;
     private ImageView mShuffleButton;
@@ -151,12 +154,11 @@ public class SongDetailFragment extends Fragment implements Playable, View.OnCli
             }
         });
         mSharedData.get_mPlayingNowIndex().observe(getViewLifecycleOwner(), position -> {
-            if (!Objects.equals(mPlayingNowIndex, position)) {
-                mPlayingNowIndex = position;
-                playSong(mSongs.get(mPlayingNowIndex), false);
-                redrawPlayPauseButton();
-                createNotification(requireContext(), mSongs.get(mPlayingNowIndex));
-            }
+            if (Objects.equals(position, mPlayingNowIndex)) return;
+            mPlayingNowIndex = position;
+            playSong(mSongs.get(mPlayingNowIndex), false);
+            redrawPlayPauseButton();
+            createNotification(requireContext(), mSongs.get(mPlayingNowIndex));
         });
         mSettings.get_mDirPath().observe(getViewLifecycleOwner(), folder -> this.mFolder = folder);
 
@@ -229,19 +231,19 @@ public class SongDetailFragment extends Fragment implements Playable, View.OnCli
 
     public void prev() {
         if (mPlayingNowIndex - 1 >= 0) {
-            int now = mPlayingNowIndex - 1;
-            mSharedData.set_mPlayingNowIndex(now);
-            playSong(mSongs.get(now), false);
+            mPlayingNowIndex -= 1;
+            playSong(mSongs.get(mPlayingNowIndex), false);
             redrawPlayPauseButton();
+            mSharedData.set_mPlayingNowIndex(mPlayingNowIndex);
         }
     }
 
     public void next() {
         if (mPlayingNowIndex + 1 < mSongs.size()) {
-            int now = mPlayingNowIndex + 1;
-            mSharedData.set_mPlayingNowIndex(now);
-            playSong(mSongs.get(now), false);
+            mPlayingNowIndex += 1;
+            playSong(mSongs.get(mPlayingNowIndex), false);
             redrawPlayPauseButton();
+            mSharedData.set_mPlayingNowIndex(mPlayingNowIndex);
         }
     }
 
