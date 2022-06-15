@@ -155,8 +155,6 @@ public class SongDetailFragment extends Fragment implements Playable, View.OnCli
             if (Objects.equals(position, mPlayingNowIndex) && mPlayingNowIndex != 0) return;
             mPlayingNowIndex = position;
             playSong(mSongs.get(mPlayingNowIndex), false);
-            redrawPlayPauseButton();
-            createNotification(requireContext(), mSongs.get(mPlayingNowIndex));
         });
 
         mPrevSongsShuffleOn = new Stack<>();
@@ -204,13 +202,10 @@ public class SongDetailFragment extends Fragment implements Playable, View.OnCli
             if (shuffled) {
                 mShuffleButton.setImageResource(R.drawable.ic_baseline_shuffle_24);
                 shuffled = false;
-
                 mPrevSongsShuffleOn.clear();
             } else {
                 mShuffleButton.setImageResource(R.drawable.ic_baseline_shuffle_32_true);
                 shuffled = true;
-
-
             }
         }
     }
@@ -233,7 +228,6 @@ public class SongDetailFragment extends Fragment implements Playable, View.OnCli
             mPlayingNowIndex -= 1;
         } else return;
         playSong(mSongs.get(mPlayingNowIndex), false);
-        redrawPlayPauseButton();
         mSharedData.set_mPlayingNowIndex(mPlayingNowIndex);
     }
 
@@ -245,7 +239,6 @@ public class SongDetailFragment extends Fragment implements Playable, View.OnCli
             mPlayingNowIndex += 1;
         } else return;
         playSong(mSongs.get(mPlayingNowIndex), false);
-        redrawPlayPauseButton();
         mSharedData.set_mPlayingNowIndex(mPlayingNowIndex);
 
     }
@@ -264,30 +257,29 @@ public class SongDetailFragment extends Fragment implements Playable, View.OnCli
     public void onTrackPrevious() {
         Log.e("buttons", "prev pressed");
         prev();
-        createNotification(requireContext(), mSongs.get(mPlayingNowIndex));
+
     }
 
     @Override
     public void onTrackPlay() {
         Log.e("buttons", "play pressed");
         playOrPause();
-        createNotification(requireContext(), mSongs.get(mPlayingNowIndex));
         redrawPlayPauseButton();
+        createNotification(requireContext(), mSongs.get(mPlayingNowIndex));
     }
 
     @Override
     public void onTrackPause() {
         Log.e("buttons", "pause pressed");
         playOrPause();
-        createNotification(requireContext(), mSongs.get(mPlayingNowIndex));
         redrawPlayPauseButton();
+        createNotification(requireContext(), mSongs.get(mPlayingNowIndex));
     }
 
     @Override
     public void onTrackNext() {
         Log.e("buttons", "next pressed");
         next();
-        createNotification(requireContext(), mSongs.get(mPlayingNowIndex));
     }
 
     @Override
@@ -420,7 +412,6 @@ public class SongDetailFragment extends Fragment implements Playable, View.OnCli
         mSongTitle.setText(play.get_mSongTitle());
         mSongTitle.setSelected(true);
         mSongArtistName.setText(play.get_mArtistName());
-        createNotification(requireContext(), play);
 
         ExecutorService executor = Executors.newSingleThreadExecutor();
         executor.execute(() -> {
@@ -467,6 +458,9 @@ public class SongDetailFragment extends Fragment implements Playable, View.OnCli
             endPosition.setText(Utils.convertToMMSS(mServiceBound.get_mService().getDuration() + ""));
             mServiceBound.get_mService().setCompletionListener(this);
             isPlaying = true;
+
+            redrawPlayPauseButton();
+            createNotification(requireContext(), play);
         }
     }
 

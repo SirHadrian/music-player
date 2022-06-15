@@ -1,6 +1,7 @@
 package com.sirhadrian.musicplayer.ui;
 
 import android.annotation.SuppressLint;
+import android.content.Context;
 import android.graphics.Bitmap;
 import android.graphics.BitmapFactory;
 import android.os.Bundle;
@@ -10,6 +11,7 @@ import android.util.LruCache;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
+import android.view.inputmethod.InputMethodManager;
 import android.widget.EditText;
 import android.widget.ImageView;
 import android.widget.TextView;
@@ -156,6 +158,11 @@ public class SongsListFragment extends Fragment implements View.OnClickListener 
                 mFabSearch.setImageResource(R.drawable.ic_baseline_close_24);
                 mSongsAlwaysFull = new ArrayList<>(mSongsList);
                 mSearchBox.setVisibility(View.VISIBLE);
+
+                mSearchBox.requestFocus();
+                InputMethodManager imm = (InputMethodManager) requireActivity().getSystemService(Context.INPUT_METHOD_SERVICE);
+                imm.showSoftInput(mSearchBox, InputMethodManager.SHOW_IMPLICIT);
+
                 editTextOpen = true;
             }
         });
