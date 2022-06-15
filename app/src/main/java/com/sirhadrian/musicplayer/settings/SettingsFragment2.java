@@ -2,7 +2,6 @@ package com.sirhadrian.musicplayer.settings;
 
 import static android.app.Activity.RESULT_OK;
 
-import android.content.Context;
 import android.content.Intent;
 import android.net.Uri;
 import android.os.Bundle;
@@ -17,11 +16,8 @@ import com.sirhadrian.musicplayer.model.database.SongModel;
 import com.sirhadrian.musicplayer.ui.SharedDataViewModel;
 import com.sirhadrian.musicplayer.utils.Query;
 import com.sirhadrian.musicplayer.utils.Result;
-import com.sirhadrian.musicplayer.utils.ResultCallback;
 
 import java.util.ArrayList;
-import java.util.concurrent.ExecutorService;
-import java.util.concurrent.Executors;
 
 public class SettingsFragment2 extends PreferenceFragmentCompat {
 
@@ -56,7 +52,7 @@ public class SettingsFragment2 extends PreferenceFragmentCompat {
         assert mScanButton != null;
         mScanButton.setOnPreferenceClickListener(preference -> {
             if (mFolder == null) return false;
-            makeScanRequest(requireContext(),
+            Query.makeScanRequest(requireContext(),
                     mFolder,
                     result -> {
                         if (result instanceof Result.Success) {
@@ -86,18 +82,5 @@ public class SettingsFragment2 extends PreferenceFragmentCompat {
     @Override
     public void onResume() {
         super.onResume();
-    }
-
-    private void makeScanRequest(Context context, String folder, ResultCallback<ArrayList<SongModel>> callback) {
-        ExecutorService executor = Executors.newSingleThreadExecutor();
-        executor.execute(() -> {
-            try {
-                Result<ArrayList<SongModel>> result = new Result.Success<>(Query.getAllAudioFromDevice(context, folder));
-                callback.onComplete(result);
-            } catch (Exception e) {
-                Result<ArrayList<SongModel>> errorResult = new Result.Error<>(e);
-                callback.onComplete(errorResult);
-            }
-        });
     }
 }

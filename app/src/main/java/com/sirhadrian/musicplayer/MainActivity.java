@@ -23,11 +23,15 @@ import androidx.core.content.ContextCompat;
 import androidx.lifecycle.ViewModelProvider;
 
 import com.sirhadrian.musicplayer.databinding.ActivityMainBinding;
+import com.sirhadrian.musicplayer.model.database.SongModel;
 import com.sirhadrian.musicplayer.services.PlaySongs;
 import com.sirhadrian.musicplayer.ui.SharedDataViewModel;
 import com.sirhadrian.musicplayer.ui.main.MainActivityViewModel;
 import com.sirhadrian.musicplayer.ui.viewpager.ViewPagerFragment;
 import com.sirhadrian.musicplayer.utils.Query;
+import com.sirhadrian.musicplayer.utils.Result;
+
+import java.util.ArrayList;
 
 public class MainActivity extends AppCompatActivity implements ServiceConnection {
 
@@ -58,7 +62,14 @@ public class MainActivity extends AppCompatActivity implements ServiceConnection
         mUserPermission = registerForActivityResult(new ActivityResultContracts.RequestPermission(), result -> {
             Context context = this;
             if (result) {
-                mSharedData.loadSongs(Query.getAllAudioFromDevice(context, null));
+                Query.makeScanRequest(this, null, result1 -> {
+                    if (result1 instanceof Result.Success) {
+                        ArrayList<SongModel> songs = ((Result.Success<ArrayList<SongModel>>) result1).get_Data();
+                        mSharedData.set_value_in_worker_thread(songs);
+                    } else if (result1 instanceof Result.Error) {
+                        ((Result.Error<ArrayList<SongModel>>) result1).exception.printStackTrace();
+                    }
+                });
             } else {
                 respondOnUserPermissionActs(context);
             }

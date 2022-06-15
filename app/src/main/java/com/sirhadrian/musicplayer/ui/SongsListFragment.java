@@ -4,10 +4,13 @@ import android.annotation.SuppressLint;
 import android.graphics.Bitmap;
 import android.graphics.BitmapFactory;
 import android.os.Bundle;
+import android.text.Editable;
+import android.text.TextWatcher;
 import android.util.LruCache;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
+import android.widget.EditText;
 import android.widget.ImageView;
 import android.widget.TextView;
 
@@ -16,9 +19,11 @@ import androidx.annotation.Nullable;
 import androidx.constraintlayout.widget.ConstraintLayout;
 import androidx.fragment.app.Fragment;
 import androidx.lifecycle.ViewModelProvider;
+import androidx.navigation.NavController;
 import androidx.recyclerview.widget.LinearLayoutManager;
 import androidx.recyclerview.widget.RecyclerView;
 
+import com.google.android.material.floatingactionbutton.FloatingActionButton;
 import com.sirhadrian.musicplayer.R;
 import com.sirhadrian.musicplayer.databinding.FragmentSongsListBinding;
 import com.sirhadrian.musicplayer.model.database.SongModel;
@@ -26,6 +31,7 @@ import com.sirhadrian.musicplayer.ui.viewpager.ViewPagerFragment;
 import com.sirhadrian.musicplayer.utils.Utils;
 
 import java.util.ArrayList;
+import java.util.Collections;
 import java.util.List;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
@@ -35,8 +41,10 @@ import jp.wasabeef.blurry.Blurry;
 public class SongsListFragment extends Fragment implements View.OnClickListener {
 
     private List<SongModel> mSongsList;
+    private ArrayList<SongModel> mSongsAlwaysFull;
 
     private SharedDataViewModel mSharedData;
+    private SongsListViewModel mSongsListVM;
 
     private SongsAdapter mSongsAdapter;
     private LruCache<String, Bitmap> memoryCache;
@@ -49,6 +57,19 @@ public class SongsListFragment extends Fragment implements View.OnClickListener 
     private ConstraintLayout rowLayout;
     private TextView mIndexAndTotal;
 
+    // FABs
+    private FloatingActionButton mMasterSwitch;
+    private FloatingActionButton mFabSettings;
+    private FloatingActionButton mFabShuffle;
+    private FloatingActionButton mFabSearch;
+    private boolean editTextOpen = false;
+    private EditText mSearchBox;
+    private boolean isFABOpen;
+
+    private String mLastFindPattern;
+
+    private NavController mNavCtrl;
+
     @SuppressLint("NotifyDataSetChanged")
     @Nullable
     @Override
@@ -56,7 +77,9 @@ public class SongsListFragment extends Fragment implements View.OnClickListener 
                              @Nullable Bundle savedInstanceState) {
 
         FragmentSongsListBinding binding = FragmentSongsListBinding.inflate(inflater, container, false);
-        View view = binding.getRoot();
+        View root = binding.getRoot();
+
+        mSongsListVM = new ViewModelProvider(requireActivity()).get(SongsListViewModel.class);
 
         backgroundImage = binding.itemBackgroundImage;
         smallIconImage = binding.smallSongIcon;
@@ -98,8 +121,116 @@ public class SongsListFragment extends Fragment implements View.OnClickListener 
             }
         };
 
+        mMasterSwitch = binding.masterSwitch;
+        mFabSettings = binding.fabSettings;
+        mFabShuffle = binding.fabShuffleSongs;
+        mFabSearch = binding.fabSearchSong;
+        mSearchBox = binding.searchEditText;
 
-        return view;
+        mFabShuffle.setOnClickListener(view -> {
+            ArrayList<SongModel> mSongs = mSharedData.get_mSongsList().getValue();
+            if (mSongs != null) {
+                Collections.shuffle(mSongs);
+                mSharedData.loadSongs(mSongs);
+            }
+        });
+
+        mFabSettings.setOnClickListener(view -> {
+            if (mNavCtrl == null) return;
+            mNavCtrl.navigate(R.id.action_viewPagerFragment_to_settingsFragment2);
+            ViewPagerFragment.set_SettingsOpen(true);
+        });
+
+        mMasterSwitch.setOnClickListener(view -> {
+            if (!isFABOpen) {
+                showFABMenu();
+
+            } else {
+                closeFABMenu();
+            }
+        });
+
+        mFabSearch.setOnClickListener(view -> {
+            if (editTextOpen) {
+                closeEditBox();
+            } else {
+                mSongsAlwaysFull = new ArrayList<>(mSongsList);
+                mSearchBox.setVisibility(View.VISIBLE);
+                editTextOpen = true;
+            }
+        });
+
+        mSearchBox.addTextChangedListener(new TextWatcher() {
+            @Override
+            public void beforeTextChanged(CharSequence charSequence, int i, int i1, int i2) {
+                mLastFindPattern = charSequence.toString();
+            }
+
+            @Override
+            public void onTextChanged(CharSequence charSequence, int
+                    i, int i1, int i2) {
+
+            }
+
+            @Override
+            public void afterTextChanged(Editable editable) {
+                if (editable.toString().length() < mLastFindPattern.length()) {
+                    mSharedData.loadSongs(mSongsAlwaysFull);
+                }
+                filter(editable.toString());
+            }
+        });
+
+        return root;
+    }
+
+    @Override
+    public void onPause() {
+        super.onPause();
+        if (editTextOpen) {
+            closeEditBox();
+        }
+        if (isFABOpen) {
+            closeFABMenu();
+        }
+    }
+
+    private void closeEditBox() {
+        if (!mSearchBox.getText().toString().isEmpty()) {
+            mSharedData.loadSongs(mSongsAlwaysFull);
+        }
+
+        mSearchBox.clearFocus();
+        mSearchBox.setVisibility(View.GONE);
+        editTextOpen = false;
+    }
+
+    private void filter(String search) {
+        ArrayList<SongModel> filteredSongs = new ArrayList<>();
+
+        for (SongModel song : mSongsList) {
+            if (song.get_mSongTitle().toLowerCase().trim().contains(search.toLowerCase().trim())) {
+                filteredSongs.add(song);
+            }
+        }
+        mSharedData.loadSongs(filteredSongs);
+    }
+
+    private void closeFABMenu() {
+        mMasterSwitch.setImageResource(R.drawable.ic_baseline_expand_more_24);
+        isFABOpen = false;
+        mFabSettings.animate().translationY(0);
+        mFabShuffle.animate().translationY(0);
+        mFabSearch.animate().translationY(0);
+    }
+
+    private void showFABMenu() {
+        mMasterSwitch.setImageResource(R.drawable.ic_baseline_expand_less_24);
+        isFABOpen = true;
+        int base = 100;
+        mFabSettings.animate().translationY(base);
+        mFabShuffle.animate().translationY(base * 2);
+        mFabSearch.animate().translationY(base * 3);
     }
 
     private void displayPlayingNowIndexAtBottom(Integer position) {
@@ -150,7 +281,7 @@ public class SongsListFragment extends Fragment implements View.OnClickListener 
     @Override
     public void onViewCreated(@NonNull View view, @Nullable Bundle savedInstanceState) {
         super.onViewCreated(view, savedInstanceState);
-        //navController = Navigation.findNavController(view);
+        mNavCtrl = mSongsListVM.get_mNavCtrl();
     }
 
     private class SongsAdapter extends RecyclerView.Adapter<SongsAdapter.SongHolder> {

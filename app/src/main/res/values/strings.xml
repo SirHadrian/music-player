@@ -43,5 +43,7 @@
     <string name="settings_fragment">Settings fragment</string>
     <string name="scan_directory">ScanDirectory</string>
     <string name="shuffle_the_list_of_songs">Shuffle the list of songs</string>
+    <string name="shuffle">Shuffle</string>
+    <string name="search_for_song">Search for song</string>
 
 </resources>

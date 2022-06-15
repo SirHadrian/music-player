@@ -12,6 +12,8 @@ import androidx.documentfile.provider.DocumentFile;
 import com.sirhadrian.musicplayer.model.database.SongModel;
 
 import java.util.ArrayList;
+import java.util.concurrent.ExecutorService;
+import java.util.concurrent.Executors;
 
 public class Query {
 
@@ -55,6 +57,19 @@ public class Query {
             actualResult = result.toString();
         }
         return actualResult;
+    }
+
+    public static void makeScanRequest(Context context, String folder, ResultCallback<ArrayList<SongModel>> callback) {
+        ExecutorService executor = Executors.newSingleThreadExecutor();
+        executor.execute(() -> {
+            try {
+                Result<ArrayList<SongModel>> result = new Result.Success<>(Query.getAllAudioFromDevice(context, folder));
+                callback.onComplete(result);
+            } catch (Exception e) {
+                Result<ArrayList<SongModel>> errorResult = new Result.Error<>(e);
+                callback.onComplete(errorResult);
+            }
+        });
     }
 
     public static ArrayList<SongModel> getAllAudioFromDevice(final Context context, String folderName) {

@@ -162,6 +162,8 @@ public class SongDetailFragment extends Fragment implements Playable, View.OnCli
             createNotification(requireContext(), mSongs.get(mPlayingNowIndex));
         });
 
+        mPrevSongsShuffleOn = new Stack<>();
+
         return root;
     }
 
@@ -206,12 +208,12 @@ public class SongDetailFragment extends Fragment implements Playable, View.OnCli
                 mShuffleButton.setImageResource(R.drawable.ic_baseline_shuffle_24);
                 shuffled = false;
 
-                mPrevSongsShuffleOn = null;
+                mPrevSongsShuffleOn.clear();
             } else {
                 mShuffleButton.setImageResource(R.drawable.ic_baseline_shuffle_32_true);
                 shuffled = true;
 
-                mPrevSongsShuffleOn = new Stack<>();
+
             }
         }
     }
@@ -225,13 +227,11 @@ public class SongDetailFragment extends Fragment implements Playable, View.OnCli
     }
 
     public void prev() {
-        if (shuffled && mPrevSongsShuffleOn != null) {
-            try {
+        if (shuffled) {
+            if (!mPrevSongsShuffleOn.isEmpty()) {
                 mPlayingNowIndex = mPrevSongsShuffleOn.pop();
-            } catch (EmptyStackException e) {
-                e.printStackTrace();
-                return;
-            }
+            } else return;
+
         } else if (mPlayingNowIndex - 1 >= 0) {
             mPlayingNowIndex -= 1;
         } else return;
@@ -241,7 +241,7 @@ public class SongDetailFragment extends Fragment implements Playable, View.OnCli
     }
 
     public void next() {
-        if (shuffled && mPrevSongsShuffleOn != null) {
+        if (shuffled) {
             mPrevSongsShuffleOn.add(mPlayingNowIndex);
             mPlayingNowIndex = Utils.getRandomNumberUsingNextInt(mPlayingNowIndex, 0, mSongs.size());
         } else if (mPlayingNowIndex + 1 < mSongs.size()) {
@@ -324,7 +324,7 @@ public class SongDetailFragment extends Fragment implements Playable, View.OnCli
 
             PendingIntent pendingIntentPrevious;
             int draw_prev;
-            if (mPlayingNowIndex == 0) {
+            if (mPlayingNowIndex == 0 || shuffled && mPrevSongsShuffleOn.isEmpty()) {
                 pendingIntentPrevious = null;
                 draw_prev = 0;
             } else {
