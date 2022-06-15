@@ -196,8 +196,6 @@ public class SongDetailFragment extends Fragment implements Playable, View.OnCli
             next();
         } else if (buttonId == R.id.pause_play) {
             playOrPause();
-            redrawPlayPauseButton();
-            createNotification(requireContext(), mSongs.get(mPlayingNowIndex));
         } else if (buttonId == R.id.shuffle) {
             if (shuffled) {
                 mShuffleButton.setImageResource(R.drawable.ic_baseline_shuffle_24);
@@ -251,6 +249,8 @@ public class SongDetailFragment extends Fragment implements Playable, View.OnCli
             mServiceBound.get_mService().start();
             isPlaying = true;
         }
+        redrawPlayPauseButton();
+        createNotification(requireContext(), mSongs.get(mPlayingNowIndex));
     }
 
     @Override
@@ -264,16 +264,12 @@ public class SongDetailFragment extends Fragment implements Playable, View.OnCli
     public void onTrackPlay() {
         Log.e("buttons", "play pressed");
         playOrPause();
-        redrawPlayPauseButton();
-        createNotification(requireContext(), mSongs.get(mPlayingNowIndex));
     }
 
     @Override
     public void onTrackPause() {
         Log.e("buttons", "pause pressed");
         playOrPause();
-        redrawPlayPauseButton();
-        createNotification(requireContext(), mSongs.get(mPlayingNowIndex));
     }
 
     @Override
@@ -306,8 +302,6 @@ public class SongDetailFragment extends Fragment implements Playable, View.OnCli
     @SuppressLint("UnspecifiedImmutableFlag")
     private void createNotification(Context context, SongModel song) {
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
-            //MediaSessionCompat mediaSession = new MediaSessionCompat(context, "tag");
-
             String title = song.get_mSongTitle();
             String artist = song.get_mArtistName();
 
@@ -323,7 +317,6 @@ public class SongDetailFragment extends Fragment implements Playable, View.OnCli
                         intentPrevious, PendingIntent.FLAG_UPDATE_CURRENT);
                 draw_prev = R.drawable.ic_skip_previous_black_24dp;
             }
-
 
             int draw_playPause;
             if (isPlaying) {
@@ -349,7 +342,6 @@ public class SongDetailFragment extends Fragment implements Playable, View.OnCli
                 draw_next = R.drawable.ic_skip_next_black_24dp;
             }
 
-
             NotificationCompat.Builder builder = new NotificationCompat.Builder(requireActivity(), CHANNEL_ID)
                     .setSmallIcon(R.drawable.ic_music_note)
                     .setVisibility(NotificationCompat.VISIBILITY_PUBLIC)
@@ -359,19 +351,15 @@ public class SongDetailFragment extends Fragment implements Playable, View.OnCli
                     .addAction(draw_next, "Next", pendingIntentNext)     // #2
 
                     .setStyle(new androidx.media.app.NotificationCompat.MediaStyle()
-                                    .setShowActionsInCompactView(0, 1, 2)
-                            //.setMediaSession(mediaSession.getSessionToken())
-                    )
+                            .setShowActionsInCompactView(0, 1, 2))
                     .setContentTitle(title)
                     .setContentText(artist)
                     .setOngoing(true)
                     .setAutoCancel(false)
                     .setSilent(true) // No sound
-                    .setVisibility(NotificationCompat.VISIBILITY_PUBLIC)
                     .setPriority(NotificationCompat.PRIORITY_DEFAULT);
 
             NotificationManagerCompat notificationManager = NotificationManagerCompat.from(requireActivity());
-
             // notificationId is a unique int for each notification that you must define
             notificationManager.notify(1234, builder.build());
         }
@@ -393,21 +381,6 @@ public class SongDetailFragment extends Fragment implements Playable, View.OnCli
         });
     }
 
-    @Override
-    public void onPause() {
-        super.onPause();
-    }
-
-    @Override
-    public void onDestroy() {
-        super.onDestroy();
-    }
-
-    @Override
-    public void onStop() {
-        super.onStop();
-    }
-
     private void displayCurrentSong(SongModel play) {
         mSongTitle.setText(play.get_mSongTitle());
         mSongTitle.setSelected(true);
@@ -423,7 +396,6 @@ public class SongDetailFragment extends Fragment implements Playable, View.OnCli
             }
             setArtFromBackgroundThread(mArtImageView, mBlurBackground, art);
         });
-
     }
 
     private void setArtFromBackgroundThread(ImageView image, ImageView background, Bitmap art) {
@@ -437,27 +409,23 @@ public class SongDetailFragment extends Fragment implements Playable, View.OnCli
 
     private void playSong(SongModel play, boolean justInitSong) {
         if (mServiceBound.isBoundValueRaw()) {
-            displayCurrentSong(play);
-            if (justInitSong) {
-                mServiceBound.get_mService().playSong(play.get_mSongUri(), false);
-                mSongSeekBar.setProgress(0);
-                mSongSeekBar.setMax(mServiceBound.get_mService().getDuration());
-                endPosition.setText(Utils.convertToMMSS(mServiceBound.get_mService().getDuration() + ""));
-                mServiceBound.get_mService().setCompletionListener(this);
-                isPlaying = false;
-                redrawPlayPauseButton();
-                return;
-            }
             if (mServiceBound.get_mService().isPlaying()) {
                 mServiceBound.get_mService().stop();
             }
+            displayCurrentSong(play);
 
-            mServiceBound.get_mService().playSong(play.get_mSongUri(), true);
+            if (justInitSong) {
+                mServiceBound.get_mService().playSong(play.get_mSongUri(), false);
+                isPlaying = false;
+            } else {
+                mServiceBound.get_mService().playSong(play.get_mSongUri(), true);
+                isPlaying = true;
+            }
+
             mSongSeekBar.setProgress(0);
             mSongSeekBar.setMax(mServiceBound.get_mService().getDuration());
             endPosition.setText(Utils.convertToMMSS(mServiceBound.get_mService().getDuration() + ""));
             mServiceBound.get_mService().setCompletionListener(this);
-            isPlaying = true;
 
             redrawPlayPauseButton();
             createNotification(requireContext(), play);

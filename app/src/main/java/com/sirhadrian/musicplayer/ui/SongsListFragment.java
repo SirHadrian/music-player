@@ -83,21 +83,31 @@ public class SongsListFragment extends Fragment implements View.OnClickListener 
 
         mSongsListVM = new ViewModelProvider(requireActivity()).get(SongsListViewModel.class);
 
+        // View bindings
         backgroundImage = binding.itemBackgroundImage;
         smallIconImage = binding.smallSongIcon;
         songTitle = binding.songTitle;
         artistName = binding.songArtist;
         rowLayout = binding.bottomRow;
         mIndexAndTotal = binding.indexAndTotal;
+        mMasterSwitch = binding.masterSwitch;
+        mFabSettings = binding.fabSettings;
+        mFabShuffle = binding.fabShuffleSongs;
+        mFabSearch = binding.fabSearchSong;
+        mSearchBox = binding.searchEditText;
 
-        mSongsList = new ArrayList<>();
+        // Setting listeners;
+        mFabShuffle.setOnClickListener(this);
+        mFabSettings.setOnClickListener(this);
+        mFabSearch.setOnClickListener(this);
+        mMasterSwitch.setOnClickListener(this);
 
         RecyclerView mRecyclerView = binding.fragmentSongsListRecyclerView;
-        mRecyclerView.setLayoutManager(new LinearLayoutManager(getContext()));
+        mRecyclerView.setLayoutManager(new LinearLayoutManager(requireContext()));
 
+        mSongsList = new ArrayList<>();
         mSongsAdapter = new SongsAdapter(mSongsList);
         mRecyclerView.setAdapter(mSongsAdapter);
-
 
         mSharedData = new ViewModelProvider(requireActivity()).get(SharedDataViewModel.class);
         mSharedData.get_mSongsList().observe(getViewLifecycleOwner(), songs -> {
@@ -105,15 +115,12 @@ public class SongsListFragment extends Fragment implements View.OnClickListener 
             mSongsList.addAll(songs);
             mSongsAdapter.notifyDataSetChanged();
         });
-
         mSharedData.get_mPlayingNowIndex().observe(getViewLifecycleOwner(),
                 position -> displayPlayingNowIndexAtBottom(position));
 
         final int maxMemory = (int) (Runtime.getRuntime().maxMemory() / 1024);
-
         // Use 1/8th of the available memory for this memory cache.
         final int cacheSize = maxMemory / 8;
-
         memoryCache = new LruCache<String, Bitmap>(cacheSize) {
             @Override
             protected int sizeOf(String key, Bitmap bitmap) {
@@ -122,50 +129,6 @@ public class SongsListFragment extends Fragment implements View.OnClickListener 
                 return bitmap.getByteCount() / 1024;
             }
         };
-
-        mMasterSwitch = binding.masterSwitch;
-        mFabSettings = binding.fabSettings;
-        mFabShuffle = binding.fabShuffleSongs;
-        mFabSearch = binding.fabSearchSong;
-        mSearchBox = binding.searchEditText;
-
-        mFabShuffle.setOnClickListener(view -> {
-            ArrayList<SongModel> mSongs = mSharedData.get_mSongsList().getValue();
-            if (mSongs != null) {
-                Collections.shuffle(mSongs);
-                mSharedData.loadSongs(mSongs);
-            }
-        });
-
-        mFabSettings.setOnClickListener(view -> {
-            if (mNavCtrl == null) return;
-            mNavCtrl.navigate(R.id.action_viewPagerFragment_to_settingsFragment2);
-        });
-
-        mMasterSwitch.setOnClickListener(view -> {
-            if (!isFABOpen) {
-                showFABMenu();
-
-            } else {
-                closeFABMenu();
-            }
-        });
-
-        mFabSearch.setOnClickListener(view -> {
-            if (editTextOpen) {
-                closeEditBox();
-            } else {
-                mFabSearch.setImageResource(R.drawable.ic_baseline_close_24);
-                mSongsAlwaysFull = new ArrayList<>(mSongsList);
-                mSearchBox.setVisibility(View.VISIBLE);
-
-                mSearchBox.requestFocus();
-                InputMethodManager imm = (InputMethodManager) requireActivity().getSystemService(Context.INPUT_METHOD_SERVICE);
-                imm.showSoftInput(mSearchBox, InputMethodManager.SHOW_IMPLICIT);
-
-                editTextOpen = true;
-            }
-        });
 
         mSearchBox.addTextChangedListener(new TextWatcher() {
             @Override
@@ -190,6 +153,53 @@ public class SongsListFragment extends Fragment implements View.OnClickListener 
         });
 
         return root;
+    }
+
+    @Override
+    public void onClick(View view) {
+        int itemId = view.getId();
+
+        if (itemId == R.id.bottom_row) {
+            ViewPagerFragment.goToDetail();
+        }
+
+        else if (itemId == R.id.fab_shuffle_songs) {
+            ArrayList<SongModel> mSongs = mSharedData.get_mSongsList().getValue();
+            if (mSongs != null) {
+                Collections.shuffle(mSongs);
+                mSharedData.loadSongs(mSongs);
+            }
+        }
+
+        else if (itemId == R.id.fab_settings) {
+            if (mNavCtrl == null) return;
+            mNavCtrl.navigate(R.id.action_viewPagerFragment_to_settingsFragment2);
+        }
+
+        else if (itemId == R.id.master_switch) {
+            if (!isFABOpen) {
+                showFABMenu();
+
+            } else {
+                closeFABMenu();
+            }
+        }
+
+        else if (itemId == R.id.fab_search_song) {
+            if (editTextOpen) {
+                closeEditBox();
+            } else {
+                mFabSearch.setImageResource(R.drawable.ic_baseline_close_24);
+                mSongsAlwaysFull = new ArrayList<>(mSongsList);
+                mSearchBox.setVisibility(View.VISIBLE);
+
+                mSearchBox.requestFocus();
+                InputMethodManager imm = (InputMethodManager) requireActivity().getSystemService(Context.INPUT_METHOD_SERVICE);
+                imm.showSoftInput(mSearchBox, InputMethodManager.SHOW_IMPLICIT);
+
+                editTextOpen = true;
+            }
+        }
     }
 
     @Override
@@ -243,7 +253,6 @@ public class SongsListFragment extends Fragment implements View.OnClickListener 
         SongModel currentPlaying = mSongsList.get(position);
 
         mIndexAndTotal.setText(String.format("%s/%s", position + 1, mSongsList.size()));
-
         songTitle.setText(currentPlaying.get_mSongTitle());
         artistName.setText(currentPlaying.get_mArtistName());
 
@@ -263,15 +272,6 @@ public class SongsListFragment extends Fragment implements View.OnClickListener 
                 .into(backgroundImage);
         rowLayout.setVisibility(View.VISIBLE);
         rowLayout.setOnClickListener(this);
-
-    }
-
-    @Override
-    public void onClick(View view) {
-        int itemId = view.getId();
-        if (itemId == R.id.bottom_row) {
-            ViewPagerFragment.goToDetail();
-        }
     }
 
     public void addBitmapToMemoryCache(String key, Bitmap bitmap) {
