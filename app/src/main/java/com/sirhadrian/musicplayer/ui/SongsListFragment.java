@@ -109,8 +109,8 @@ public class SongsListFragment extends Fragment implements View.OnClickListener 
 
         final int maxMemory = (int) (Runtime.getRuntime().maxMemory() / 1024);
 
-        // Use 1/4th of the available memory for this memory cache.
-        final int cacheSize = maxMemory / 4;
+        // Use 1/8th of the available memory for this memory cache.
+        final int cacheSize = maxMemory / 8;
 
         memoryCache = new LruCache<String, Bitmap>(cacheSize) {
             @Override
@@ -138,7 +138,6 @@ public class SongsListFragment extends Fragment implements View.OnClickListener 
         mFabSettings.setOnClickListener(view -> {
             if (mNavCtrl == null) return;
             mNavCtrl.navigate(R.id.action_viewPagerFragment_to_settingsFragment2);
-            ViewPagerFragment.set_SettingsOpen(true);
         });
 
         mMasterSwitch.setOnClickListener(view -> {
@@ -154,6 +153,7 @@ public class SongsListFragment extends Fragment implements View.OnClickListener 
             if (editTextOpen) {
                 closeEditBox();
             } else {
+                mFabSearch.setImageResource(R.drawable.ic_baseline_close_24);
                 mSongsAlwaysFull = new ArrayList<>(mSongsList);
                 mSearchBox.setVisibility(View.VISIBLE);
                 editTextOpen = true;
@@ -176,8 +176,9 @@ public class SongsListFragment extends Fragment implements View.OnClickListener 
             public void afterTextChanged(Editable editable) {
                 if (editable.toString().length() < mLastFindPattern.length()) {
                     mSharedData.loadSongs(mSongsAlwaysFull);
+                } else if (editable.toString().length() > mLastFindPattern.length()) {
+                    filter(editable.toString());
                 }
-                filter(editable.toString());
             }
         });
 
@@ -196,10 +197,8 @@ public class SongsListFragment extends Fragment implements View.OnClickListener 
     }
 
     private void closeEditBox() {
-        if (!mSearchBox.getText().toString().isEmpty()) {
-            mSharedData.loadSongs(mSongsAlwaysFull);
-        }
-
+        mSearchBox.setText("");
+        mFabSearch.setImageResource(R.drawable.ic_baseline_search_24);
         mSearchBox.clearFocus();
         mSearchBox.setVisibility(View.GONE);
         editTextOpen = false;

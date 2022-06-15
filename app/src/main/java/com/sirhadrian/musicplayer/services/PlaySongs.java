@@ -1,7 +1,6 @@
 package com.sirhadrian.musicplayer.services;
 
 import android.app.Service;
-import android.content.Context;
 import android.content.Intent;
 import android.media.AudioAttributes;
 import android.media.MediaPlayer;
@@ -13,7 +12,7 @@ import java.io.IOException;
 
 public class PlaySongs extends Service {
     public final IBinder binder = new LocalBinder();
-    MediaPlayer mPlayer;
+    private MediaPlayer mPlayer;
 
     @Override
     public void onCreate() {
@@ -56,54 +55,54 @@ public class PlaySongs extends Service {
         }
     }
 
-    public void start(){
+    public void start() {
         if (!mPlayer.isPlaying())
             mPlayer.start();
     }
 
-    public void pause(){
+    public void pause() {
         if (mPlayer.isPlaying()) {
             mPlayer.pause();
         }
     }
 
     public boolean isPlaying() {
-        if (mPlayer == null)
+        if (!isPlayerAlive())
             return false;
         return mPlayer.isPlaying();
     }
 
     public void release() {
-        if (mPlayer != null) {
+        if (isPlayerAlive()) {
             mPlayer.release();
             mPlayer = null;
         }
     }
 
     public void setCompletionListener(MediaPlayer.OnCompletionListener listener) {
-        mPlayer.setOnCompletionListener(listener);
+        if (isPlayerAlive()) mPlayer.setOnCompletionListener(listener);
     }
 
     public int getDuration() {
-        return mPlayer.getDuration();
+        if (isPlayerAlive()) return mPlayer.getDuration();
+        return 0;
     }
 
     public int getCurrentPosition() {
-        return mPlayer.getCurrentPosition();
+        if (isPlayerAlive()) return mPlayer.getCurrentPosition();
+        return 0;
     }
 
     public void seekTo(int position) {
-        if (isCreated()) {
-            mPlayer.seekTo(position);
-        }
+        if (isPlayerAlive()) mPlayer.seekTo(position);
     }
 
-    public boolean isCreated() {
+    public boolean isPlayerAlive() {
         return mPlayer != null;
     }
 
     public void playSong(String uri, boolean playNow) {
-        if (mPlayer == null) initMediaPlayer();
+        if (!isPlayerAlive()) initMediaPlayer();
         else mPlayer.reset();
 
         try {

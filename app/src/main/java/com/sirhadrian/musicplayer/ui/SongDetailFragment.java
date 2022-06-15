@@ -10,7 +10,6 @@ import android.content.Intent;
 import android.content.IntentFilter;
 import android.graphics.Bitmap;
 import android.graphics.BitmapFactory;
-import android.media.Image;
 import android.media.MediaPlayer;
 import android.os.Build;
 import android.os.Bundle;
@@ -40,9 +39,7 @@ import com.sirhadrian.musicplayer.utils.Playable;
 import com.sirhadrian.musicplayer.utils.Utils;
 
 import java.util.ArrayList;
-import java.util.EmptyStackException;
 import java.util.Objects;
-import java.util.Random;
 import java.util.Stack;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
@@ -169,7 +166,7 @@ public class SongDetailFragment extends Fragment implements Playable, View.OnCli
 
     @Override
     public void onProgressChanged(SeekBar seekBar, int i, boolean b) {
-        if (isPlaying && mServiceBound.get_mService().isCreated()) {
+        if (isPlaying && mServiceBound.get_mService().isPlayerAlive()) {
             if (b) {
                 mServiceBound.get_mService().seekTo(i);
             }

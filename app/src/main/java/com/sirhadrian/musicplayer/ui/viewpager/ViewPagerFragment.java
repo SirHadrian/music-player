@@ -30,8 +30,6 @@ public class ViewPagerFragment extends Fragment {
 
     private SongsListViewModel mSongsListVM;
 
-    private static boolean settingsOpen = false;
-
     private NavController mNavCtrl;
 
     @Nullable
@@ -82,15 +80,7 @@ public class ViewPagerFragment extends Fragment {
         if (mFragmentViewPager.getCurrentItem() == 0) {
             return true;
         }
-        if (settingsOpen) {
-            settingsOpen = false;
-            return true;
-        }
         mFragmentViewPager.setCurrentItem(mFragmentViewPager.getCurrentItem() - 1);
         return false;
-    }
-
-    public static void set_SettingsOpen(boolean settingsOpen) {
-        ViewPagerFragment.settingsOpen = settingsOpen;
     }
 }
