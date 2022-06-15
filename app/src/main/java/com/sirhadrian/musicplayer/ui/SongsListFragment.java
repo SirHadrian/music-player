@@ -67,6 +67,7 @@ public class SongsListFragment extends Fragment implements View.OnClickListener 
     private boolean editTextOpen = false;
     private EditText mSearchBox;
     private boolean isFABOpen;
+    private InputMethodManager imm;
 
     private String mLastFindPattern;
 
@@ -152,6 +153,8 @@ public class SongsListFragment extends Fragment implements View.OnClickListener 
             }
         });
 
+        imm = (InputMethodManager) requireActivity().getSystemService(Context.INPUT_METHOD_SERVICE);
+
         return root;
     }
 
@@ -194,7 +197,6 @@ public class SongsListFragment extends Fragment implements View.OnClickListener 
                 mSearchBox.setVisibility(View.VISIBLE);
 
                 mSearchBox.requestFocus();
-                InputMethodManager imm = (InputMethodManager) requireActivity().getSystemService(Context.INPUT_METHOD_SERVICE);
                 imm.showSoftInput(mSearchBox, InputMethodManager.SHOW_IMPLICIT);
 
                 editTextOpen = true;
@@ -216,7 +218,11 @@ public class SongsListFragment extends Fragment implements View.OnClickListener 
     private void closeEditBox() {
         mSearchBox.setText("");
         mFabSearch.setImageResource(R.drawable.ic_baseline_search_24);
-        mSearchBox.clearFocus();
+
+        View focus = requireActivity().getCurrentFocus();
+        if (focus != null) {
+            imm.hideSoftInputFromWindow(focus.getWindowToken(), 0);
+        }
         mSearchBox.setVisibility(View.GONE);
         editTextOpen = false;
     }

@@ -92,7 +92,6 @@ public class SongDetailFragment extends Fragment implements Playable, View.OnCli
 
         mServiceBound = new ViewModelProvider(requireActivity()).get(MainActivityViewModel.class);
 
-
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
             createNotificationChannel();
             BroadcastReceiver broadcastReceiver = new BroadcastReceiver() {
