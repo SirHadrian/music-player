@@ -1,7 +1,7 @@
 package com.sirhadrian.musicplayer.utils;
 
+import android.annotation.SuppressLint;
 import android.content.Context;
-import android.content.res.Resources;
 import android.graphics.Bitmap;
 import android.graphics.BitmapFactory;
 import android.media.MediaMetadataRetriever;
@@ -10,15 +10,21 @@ import android.net.Uri;
 import com.sirhadrian.musicplayer.model.database.SongModel;
 
 import java.util.Random;
-import java.util.concurrent.TimeUnit;
 
 public class Utils {
 
+    @SuppressLint("DefaultLocale")
     public static String convertToMMSS(String duration) {
-        long millis = Long.parseLong(duration);
-        return String.format("%02d:%02d",
-                TimeUnit.MILLISECONDS.toMinutes(millis) % TimeUnit.HOURS.toMinutes(1),
-                TimeUnit.MILLISECONDS.toSeconds(millis) % TimeUnit.MINUTES.toSeconds(1));
+        long durationInMillis = Long.parseLong(duration);
+
+        long second = (durationInMillis / 1000) % 60;
+        long minute = (durationInMillis / (1000 * 60)) % 60;
+        long hour = (durationInMillis / (1000 * 60 * 60)) % 24;
+
+        if (minute == 0) return String.format("%02d", second);
+        if (hour == 0) return String.format("%02d:%02d", minute, second);
+
+        return String.format("%02d:%02d:%02d", hour, minute, second);
     }
 
     public static int getRandomNumberUsingNextInt(int exclude, int min, int max) {
@@ -40,8 +46,7 @@ public class Utils {
         return rawArt;
     }
 
-    public static int calculateInSampleSize(
-            BitmapFactory.Options options, int reqWidth, int reqHeight) {
+    public static int calculateInSampleSize(BitmapFactory.Options options, int reqWidth, int reqHeight) {
         // Raw height and width of image
         final int height = options.outHeight;
         final int width = options.outWidth;
@@ -59,7 +64,6 @@ public class Utils {
                 inSampleSize *= 2;
             }
         }
-
         return inSampleSize;
     }
 
@@ -80,6 +84,4 @@ public class Utils {
         options.inJustDecodeBounds = false;
         return BitmapFactory.decodeByteArray(img, 0, img.length, options);
     }
-
-
 }

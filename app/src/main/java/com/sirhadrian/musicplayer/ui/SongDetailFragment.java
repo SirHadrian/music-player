@@ -203,6 +203,7 @@ public class SongDetailFragment extends Fragment implements Playable, View.OnCli
             } else {
                 mShuffleButton.setImageResource(R.drawable.ic_baseline_shuffle_32_true);
                 shuffled = true;
+                createNotification(requireContext(), mSongs.get(mPlayingNowIndex));
             }
         }
     }
@@ -254,26 +255,22 @@ public class SongDetailFragment extends Fragment implements Playable, View.OnCli
 
     @Override
     public void onTrackPrevious() {
-        Log.e("buttons", "prev pressed");
         prev();
 
     }
 
     @Override
     public void onTrackPlay() {
-        Log.e("buttons", "play pressed");
         playOrPause();
     }
 
     @Override
     public void onTrackPause() {
-        Log.e("buttons", "pause pressed");
         playOrPause();
     }
 
     @Override
     public void onTrackNext() {
-        Log.e("buttons", "next pressed");
         next();
     }
 
