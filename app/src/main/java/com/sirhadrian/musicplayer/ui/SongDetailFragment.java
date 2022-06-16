@@ -14,7 +14,6 @@ import android.media.MediaPlayer;
 import android.os.Build;
 import android.os.Bundle;
 import android.os.Handler;
-import android.util.Log;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
@@ -75,6 +74,8 @@ public class SongDetailFragment extends Fragment implements Playable, View.OnCli
 
     // For blurry
     private ImageView mBlurBackground;
+
+    private Bitmap mCurrentArtWork = null;
 
     public static final String CHANNEL_ID = "CHANNEL_1";
     public static final String ACTION_PREVIOUS = "action-previous";
@@ -203,7 +204,7 @@ public class SongDetailFragment extends Fragment implements Playable, View.OnCli
             } else {
                 mShuffleButton.setImageResource(R.drawable.ic_baseline_shuffle_32_true);
                 shuffled = true;
-                createNotification(requireContext(), mSongs.get(mPlayingNowIndex));
+                createNotification(requireContext(), mSongs.get(mPlayingNowIndex), mCurrentArtWork);
             }
         }
     }
@@ -250,7 +251,7 @@ public class SongDetailFragment extends Fragment implements Playable, View.OnCli
             isPlaying = true;
         }
         redrawPlayPauseButton();
-        createNotification(requireContext(), mSongs.get(mPlayingNowIndex));
+        createNotification(requireContext(), mSongs.get(mPlayingNowIndex), mCurrentArtWork);
     }
 
     @Override
@@ -296,7 +297,7 @@ public class SongDetailFragment extends Fragment implements Playable, View.OnCli
     }
 
     @SuppressLint("UnspecifiedImmutableFlag")
-    private void createNotification(Context context, SongModel song) {
+    private void createNotification(Context context, SongModel song, Bitmap artwork) {
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
             String title = song.get_mSongTitle();
             String artist = song.get_mArtistName();
@@ -347,13 +348,18 @@ public class SongDetailFragment extends Fragment implements Playable, View.OnCli
                     .addAction(draw_next, "Next", pendingIntentNext)     // #2
 
                     .setStyle(new androidx.media.app.NotificationCompat.MediaStyle()
-                            .setShowActionsInCompactView(0, 1, 2))
+                            .setShowActionsInCompactView(0, 1, 2)
+                    )
                     .setContentTitle(title)
                     .setContentText(artist)
                     .setOngoing(true)
                     .setAutoCancel(false)
                     .setSilent(true) // No sound
                     .setPriority(NotificationCompat.PRIORITY_DEFAULT);
+
+            if (artwork != null) {
+                builder.setLargeIcon(artwork);
+            }
 
             NotificationManagerCompat notificationManager = NotificationManagerCompat.from(requireActivity());
             // notificationId is a unique int for each notification that you must define
@@ -390,16 +396,20 @@ public class SongDetailFragment extends Fragment implements Playable, View.OnCli
             if (art == null) {
                 art = BitmapFactory.decodeResource(getResources(), R.drawable.music_icon_big);
             }
-            setArtFromBackgroundThread(mArtImageView, mBlurBackground, art);
+            setArtFromBackgroundThread(play, mArtImageView, mBlurBackground, art);
         });
     }
 
-    private void setArtFromBackgroundThread(ImageView image, ImageView background, Bitmap art) {
+    private void setArtFromBackgroundThread(SongModel play, ImageView image, ImageView background, Bitmap art) {
         requireActivity().runOnUiThread(() -> {
             image.setImageBitmap(art);
             Blurry.with(requireContext())
                     .from(art)
                     .into(background);
+
+            mCurrentArtWork = Bitmap.createScaledBitmap(art, 100, 100, false);
+            redrawPlayPauseButton();
+            createNotification(requireContext(), play, mCurrentArtWork);
         });
     }
 
@@ -408,7 +418,6 @@ public class SongDetailFragment extends Fragment implements Playable, View.OnCli
             if (mServiceBound.get_mService().isPlaying()) {
                 mServiceBound.get_mService().stop();
             }
-            displayCurrentSong(play);
 
             if (justInitSong) {
                 mServiceBound.get_mService().playSong(play.get_mSongUri(), false);
@@ -423,8 +432,7 @@ public class SongDetailFragment extends Fragment implements Playable, View.OnCli
             endPosition.setText(Utils.convertToMMSS(mServiceBound.get_mService().getDuration() + ""));
             mServiceBound.get_mService().setCompletionListener(this);
 
-            redrawPlayPauseButton();
-            createNotification(requireContext(), play);
+            displayCurrentSong(play);
         }
     }
 
