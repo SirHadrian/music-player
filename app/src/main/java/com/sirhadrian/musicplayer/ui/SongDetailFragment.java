@@ -28,69 +28,78 @@ import androidx.core.app.NotificationManagerCompat;
 import androidx.fragment.app.Fragment;
 import androidx.lifecycle.ViewModelProvider;
 
+import com.sirhadrian.musicplayer.MainActivity;
 import com.sirhadrian.musicplayer.R;
 import com.sirhadrian.musicplayer.databinding.FragmentSongDetailBinding;
 import com.sirhadrian.musicplayer.model.database.SongModel;
 import com.sirhadrian.musicplayer.services.NotificationActionService;
 import com.sirhadrian.musicplayer.services.OnClearFromRecentService;
-import com.sirhadrian.musicplayer.ui.main.MainActivityViewModel;
+import com.sirhadrian.musicplayer.services.PlaySongsService;
 import com.sirhadrian.musicplayer.utils.Playable;
 import com.sirhadrian.musicplayer.utils.Utils;
 
 import java.util.ArrayList;
 import java.util.Objects;
 import java.util.Stack;
-import java.util.concurrent.ExecutorService;
+import java.util.concurrent.Executor;
 import java.util.concurrent.Executors;
 
 import jp.wasabeef.blurry.Blurry;
 
-public class SongDetailFragment extends Fragment implements Playable, View.OnClickListener, SeekBar.OnSeekBarChangeListener, MediaPlayer.OnCompletionListener {
+public class SongDetailFragment extends Fragment implements Playable, View.OnClickListener,
+        SeekBar.OnSeekBarChangeListener, MediaPlayer.OnCompletionListener {
 
+    // MainActivity reference for getting bound service
+    private MainActivity mMainActivity;
+    private PlaySongsService mService;
+    private boolean mBound = false;
+    // Current playlist
+    private ArrayList<SongModel> mSongs;
+    // Shared with SongListFragment
+    private Integer mPlayingNowIndex = 0;
+    // Shared data with all fragments
+    private SharedDataViewModel mSharedData;
+    // Detail song screen
     private TextView mSongTitle;
     private TextView mSongArtistName;
-    private ImageView mArtImageView;
-
-    private ArrayList<SongModel> mSongs;
-
-    // Shared directly with songs list
-    private Integer mPlayingNowIndex = 0;
-
-    private boolean isPlaying = false;
-    private ImageView mPlayPauseButton;
-    private ImageView mShuffleButton;
+    private ImageView mSongArtWork;
     private SeekBar mSongSeekBar;
-
-    private boolean shuffled = false;
+    private ImageView mPlayPauseButton;
+    private ImageView mPrevButton;
+    private ImageView mNextButton;
+    // To init the index=0 song
     private boolean firstStart = true;
-    private SharedDataViewModel mSharedData;
-
-    private MainActivityViewModel mServiceBound;
-
+    // Song duration textview display
     private TextView endPosition;
     private TextView startPosition;
-
+    // Shuffle songs
+    private ImageView mShuffleButton;
     private Stack<Integer> mPrevSongsShuffleOn;
-
-    // For blurry
+    private boolean shuffled = false;
+    // For blurry background
     private ImageView mBlurBackground;
-
+    // Notification channel actions
     public static final String CHANNEL_ID = "CHANNEL_1";
     public static final String ACTION_PREVIOUS = "action-previous";
     public static final String ACTION_PLAY = "action-play";
     public static final String ACTION_NEXT = "action-next";
+    // Notification
+    private NotificationCompat.Builder mNotificationBuilder;
+    private NotificationManagerCompat mNotifyManager;
+    // Notification ID must be unique and can be used to update an existing notification
+    private final int mNotificationID = 3321;
 
-
+    // region Lifecycle methods
     @Nullable
     @Override
     public View onCreateView(@NonNull LayoutInflater inflater, @Nullable ViewGroup container,
                              @Nullable Bundle savedInstanceState) {
 
+        // Inflating layout
         FragmentSongDetailBinding binding = FragmentSongDetailBinding.inflate(inflater, container, false);
         View root = binding.getRoot();
 
-        mServiceBound = new ViewModelProvider(requireActivity()).get(MainActivityViewModel.class);
-
+        // Creating notification channel and broadcast actions
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
             createNotificationChannel();
             BroadcastReceiver broadcastReceiver = new BroadcastReceiver() {
@@ -102,7 +111,7 @@ public class SongDetailFragment extends Fragment implements Playable, View.OnCli
                             onTrackPrevious();
                             break;
                         case ACTION_PLAY:
-                            if (isPlaying) {
+                            if (mService.isPlaying()) {
                                 onTrackPause();
                             } else {
                                 onTrackPlay();
@@ -118,53 +127,97 @@ public class SongDetailFragment extends Fragment implements Playable, View.OnCli
             requireActivity().startService(new Intent(requireActivity().getBaseContext(), OnClearFromRecentService.class));
         }
 
+        // View bindings song detail
         mSongTitle = binding.songTitle;
-
         mSongArtistName = binding.songArtist;
-
-        mArtImageView = binding.songArt;
+        mSongArtWork = binding.songArt;
         mSongSeekBar = binding.seekBar;
-        mSongSeekBar.setOnSeekBarChangeListener(this);
-
         startPosition = binding.currentTime;
         endPosition = binding.totalTime;
-
         mPlayPauseButton = binding.pausePlay;
-        ImageView mPrevButton = binding.prev;
-        ImageView mNextButton = binding.next;
+        mPrevButton = binding.prev;
+        mNextButton = binding.next;
         mShuffleButton = binding.shuffle;
+        mBlurBackground = binding.blurBackground;
+        // View Listeners
         mShuffleButton.setOnClickListener(this);
-
+        mSongSeekBar.setOnSeekBarChangeListener(this);
         mPlayPauseButton.setOnClickListener(this);
         mPrevButton.setOnClickListener(this);
         mNextButton.setOnClickListener(this);
 
-        mBlurBackground = binding.blurBackground;
-
+        // Shared songs between fragments
         mSharedData = new ViewModelProvider(requireActivity()).get(SharedDataViewModel.class);
         mSharedData.get_mSongsList().observe(getViewLifecycleOwner(), songs -> {
             mSongs = songs;
             if (firstStart) {
+                buildNotification(requireContext());
                 playSong(mSongs.get(mPlayingNowIndex), true);
                 firstStart = false;
             }
         });
+        // Shared current selected song
         mSharedData.get_mPlayingNowIndex().observe(getViewLifecycleOwner(), position -> {
             if (Objects.equals(position, mPlayingNowIndex) && mPlayingNowIndex != 0) return;
             mPlayingNowIndex = position;
             playSong(mSongs.get(mPlayingNowIndex), false);
         });
 
-        mPrevSongsShuffleOn = new Stack<>();
-
         return root;
     }
 
     @Override
+    public void onViewCreated(@NonNull View view, @Nullable Bundle savedInstanceState) {
+        super.onViewCreated(view, savedInstanceState);
+        // Keeps list of previews played songs from the first next() call
+        mPrevSongsShuffleOn = new Stack<>();
+        // Get reference to parent activity and get the service binder
+        mMainActivity = (MainActivity) requireActivity();
+        mService = mMainActivity.get_mService();
+        mBound = mMainActivity.ismBound();
+
+        mNotifyManager = NotificationManagerCompat.from(requireActivity());
+    }
+
+    @Override
+    public void onStart() {
+        super.onStart();
+    }
+
+    @Override
+    public void onResume() {
+        super.onResume();
+        requireActivity().runOnUiThread(new Runnable() {
+            @Override
+            public void run() {
+                if (mBound) {
+                    if (mService.isPlaying()) {
+                        mSongSeekBar.setProgress(mService.getCurrentPosition());
+                        startPosition.setText(Utils.convertToMMSS(mService.getCurrentPosition() + ""));
+                    }
+                    new Handler().postDelayed(this, 100);
+                }
+            }
+        });
+    }
+
+    @Override
+    public void onStop() {
+        super.onStop();
+    }
+
+    @Override
+    public void onDestroy() {
+        super.onDestroy();
+    }
+    // endregion
+
+    // region Implemented Interfaces
+    @Override
     public void onProgressChanged(SeekBar seekBar, int i, boolean b) {
-        if (isPlaying && mServiceBound.get_mService().isPlayerAlive()) {
+        if (mService.isPlaying()) {
             if (b) {
-                mServiceBound.get_mService().seekTo(i);
+                mService.seekTo(i);
             }
         }
     }
@@ -202,17 +255,20 @@ public class SongDetailFragment extends Fragment implements Playable, View.OnCli
             } else {
                 mShuffleButton.setImageResource(R.drawable.ic_baseline_shuffle_32_true);
                 shuffled = true;
-                createNotification(requireContext(), mSongs.get(mPlayingNowIndex));
+                //buildNotification(requireContext(), mSongs.get(mPlayingNowIndex));
             }
         }
     }
+    // endregion
 
+    // region Song controls
     private void redrawPlayPauseButton() {
-        if (isPlaying) {
+        if (mService.isPlaying()) {
             mPlayPauseButton.setImageResource(R.drawable.ic_baseline_pause_circle_outline_24);
         } else {
             mPlayPauseButton.setImageResource(R.drawable.ic_baseline_play_circle_outline_24);
         }
+        drawNotificationDisplayButtons(requireContext(), mNotificationBuilder);
     }
 
     public void prev() {
@@ -241,43 +297,68 @@ public class SongDetailFragment extends Fragment implements Playable, View.OnCli
     }
 
     public void playOrPause() {
-        if (isPlaying) {
-            mServiceBound.get_mService().pause();
-            isPlaying = false;
+        if (mService.isPlaying()) {
+            mService.pause();
         } else {
-            mServiceBound.get_mService().start();
-            isPlaying = true;
+            mService.start();
         }
+        // Update the notification play button
         redrawPlayPauseButton();
-        createNotification(requireContext(), mSongs.get(mPlayingNowIndex));
+        mNotifyManager.notify(mNotificationID, mNotificationBuilder.build());
+    }
+    // endregion
+
+    // region Display and play Song
+    private void displayCurrentSong(SongModel play) {
+        mSongTitle.setText(play.get_mSongTitle());
+        mSongTitle.setSelected(true);
+        mSongArtistName.setText(play.get_mArtistName());
+
+        redrawPlayPauseButton();
+        mNotificationBuilder.setContentTitle(play.get_mSongTitle());
+        mNotificationBuilder.setContentText(play.get_mArtistName());
+        mNotifyManager.notify(mNotificationID, mNotificationBuilder.build());
+
+        Executor executor = Executors.newSingleThreadExecutor();
+        executor.execute(() -> {
+            Bitmap art = Utils.decodeSampledBitmapFromResource(
+                    Utils.getByteArrayFrom(requireContext(), play), 400, 400);
+            // Default artwork
+            if (art == null) {
+                art = BitmapFactory.decodeResource(getResources(), R.drawable.music_icon_big);
+            }
+            setArtFromBackgroundThread(mSongArtWork, mBlurBackground, art);
+        });
     }
 
-    @Override
-    public void onTrackPrevious() {
-        prev();
-
+    private void setArtFromBackgroundThread(ImageView image, ImageView background, Bitmap art) {
+        requireActivity().runOnUiThread(() -> {
+            image.setImageBitmap(art);
+            Blurry.with(requireContext())
+                    .from(art)
+                    .into(background);
+        });
     }
 
-    @Override
-    public void onTrackPlay() {
-        playOrPause();
-    }
+    private void playSong(SongModel play, boolean justInitSong) {
+        if (mBound) {
+            if (mService.isPlaying()) {
+                mService.stop();
+            }
 
-    @Override
-    public void onTrackPause() {
-        playOrPause();
-    }
+            mService.playSong(play.get_mSongUri(), !justInitSong);
 
-    @Override
-    public void onTrackNext() {
-        next();
-    }
+            mSongSeekBar.setProgress(0);
+            mSongSeekBar.setMax(mService.getDuration());
+            endPosition.setText(Utils.convertToMMSS(mService.getDuration() + ""));
+            mService.setCompletionListener(this);
 
-    @Override
-    public void onCreate(@Nullable Bundle savedInstanceState) {
-        super.onCreate(savedInstanceState);
+            displayCurrentSong(play);
+        }
     }
+    // endregion
 
+    // region Notification
     private void createNotificationChannel() {
         // Create the NotificationChannel, but only on API 26+ because
         // the NotificationChannel class is new and not in the support library
@@ -295,138 +376,87 @@ public class SongDetailFragment extends Fragment implements Playable, View.OnCli
     }
 
     @SuppressLint("UnspecifiedImmutableFlag")
-    private void createNotification(Context context, SongModel song) {
+    private void buildNotification(Context context) {
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
-            String title = song.get_mSongTitle();
-            String artist = song.get_mArtistName();
-
-            PendingIntent pendingIntentPrevious;
-            int draw_prev;
-            if (mPlayingNowIndex == 0 || shuffled && mPrevSongsShuffleOn.isEmpty()) {
-                pendingIntentPrevious = null;
-                draw_prev = 0;
-            } else {
-                Intent intentPrevious = new Intent(context, NotificationActionService.class)
-                        .setAction(ACTION_PREVIOUS);
-                pendingIntentPrevious = PendingIntent.getBroadcast(context, 0,
-                        intentPrevious, PendingIntent.FLAG_UPDATE_CURRENT);
-                draw_prev = R.drawable.ic_skip_previous_black_24dp;
-            }
-
-            int draw_playPause;
-            if (isPlaying) {
-                draw_playPause = R.drawable.ic_pause_black_24dp;
-            } else {
-                draw_playPause = R.drawable.ic_play_arrow_black_24dp;
-            }
-            Intent intentPlay = new Intent(context, NotificationActionService.class)
-                    .setAction(ACTION_PLAY);
-            PendingIntent pendingIntentPlay = PendingIntent.getBroadcast(context, 0,
-                    intentPlay, PendingIntent.FLAG_UPDATE_CURRENT);
-
-            PendingIntent pendingIntentNext;
-            int draw_next;
-            if (mPlayingNowIndex + 1 == mSongs.size()) {
-                pendingIntentNext = null;
-                draw_next = 0;
-            } else {
-                Intent intentNext = new Intent(context, NotificationActionService.class)
-                        .setAction(ACTION_NEXT);
-                pendingIntentNext = PendingIntent.getBroadcast(context, 0,
-                        intentNext, PendingIntent.FLAG_UPDATE_CURRENT);
-                draw_next = R.drawable.ic_skip_next_black_24dp;
-            }
-
-            NotificationCompat.Builder builder = new NotificationCompat.Builder(requireActivity(), CHANNEL_ID)
+            mNotificationBuilder = new NotificationCompat.Builder(requireActivity(), CHANNEL_ID)
                     .setSmallIcon(R.drawable.ic_music_note)
                     .setVisibility(NotificationCompat.VISIBILITY_PUBLIC)
-
-                    .addAction(draw_prev, "Previous", pendingIntentPrevious) // #0
-                    .addAction(draw_playPause, "Pause", pendingIntentPlay)  // #1
-                    .addAction(draw_next, "Next", pendingIntentNext)     // #2
-
                     .setStyle(new androidx.media.app.NotificationCompat.MediaStyle()
                             .setShowActionsInCompactView(0, 1, 2))
-                    .setContentTitle(title)
-                    .setContentText(artist)
                     .setOngoing(true)
                     .setAutoCancel(false)
                     .setSilent(true) // No sound
                     .setPriority(NotificationCompat.PRIORITY_DEFAULT);
 
-            NotificationManagerCompat notificationManager = NotificationManagerCompat.from(requireActivity());
-            // notificationId is a unique int for each notification that you must define
-            notificationManager.notify(1234, builder.build());
+            drawNotificationDisplayButtons(context, mNotificationBuilder);
         }
+    }
+
+    // Redraw the notification buttons with the correct constraints
+    private void drawNotificationDisplayButtons(Context context, NotificationCompat.Builder builder) {
+        PendingIntent pendingIntentPrevious;
+        int draw_prev;
+        if (mPlayingNowIndex == 0 || shuffled && mPrevSongsShuffleOn.isEmpty()) {
+            pendingIntentPrevious = null;
+            draw_prev = 0;
+        } else {
+            Intent intentPrevious = new Intent(context, NotificationActionService.class)
+                    .setAction(ACTION_PREVIOUS);
+            pendingIntentPrevious = PendingIntent.getBroadcast(context, 0,
+                    intentPrevious, PendingIntent.FLAG_UPDATE_CURRENT);
+            draw_prev = R.drawable.ic_skip_previous_black_24dp;
+        }
+
+        int draw_playPause;
+        if (mService.isPlaying()) {
+            draw_playPause = R.drawable.ic_pause_black_24dp;
+        } else {
+            draw_playPause = R.drawable.ic_play_arrow_black_24dp;
+        }
+        Intent intentPlay = new Intent(context, NotificationActionService.class)
+                .setAction(ACTION_PLAY);
+        PendingIntent pendingIntentPlay = PendingIntent.getBroadcast(context, 0,
+                intentPlay, PendingIntent.FLAG_UPDATE_CURRENT);
+
+        PendingIntent pendingIntentNext;
+        int draw_next;
+        if (mPlayingNowIndex + 1 == mSongs.size()) {
+            pendingIntentNext = null;
+            draw_next = 0;
+        } else {
+            Intent intentNext = new Intent(context, NotificationActionService.class)
+                    .setAction(ACTION_NEXT);
+            pendingIntentNext = PendingIntent.getBroadcast(context, 0,
+                    intentNext, PendingIntent.FLAG_UPDATE_CURRENT);
+            draw_next = R.drawable.ic_skip_next_black_24dp;
+        }
+        // Redraw notification buttons
+        builder.clearActions();
+        builder.addAction(draw_prev, "Previous", pendingIntentPrevious) // #0
+                .addAction(draw_playPause, "Pause", pendingIntentPlay)  // #1
+                .addAction(draw_next, "Next", pendingIntentNext);     // #2
+    }
+    // endregion
+
+    // region Broadcast Interface
+    @Override
+    public void onTrackPrevious() {
+        prev();
     }
 
     @Override
-    public void onResume() {
-        super.onResume();
-
-        requireActivity().runOnUiThread(new Runnable() {
-            @Override
-            public void run() {
-                if (isPlaying && mServiceBound.isBoundValueRaw()) {
-                    mSongSeekBar.setProgress(mServiceBound.get_mService().getCurrentPosition());
-                    startPosition.setText(Utils.convertToMMSS(mServiceBound.get_mService().getCurrentPosition() + ""));
-                }
-                new Handler().postDelayed(this, 100);
-            }
-        });
+    public void onTrackPlay() {
+        playOrPause();
     }
 
-    private void displayCurrentSong(SongModel play) {
-        mSongTitle.setText(play.get_mSongTitle());
-        mSongTitle.setSelected(true);
-        mSongArtistName.setText(play.get_mArtistName());
-
-        ExecutorService executor = Executors.newSingleThreadExecutor();
-        executor.execute(() -> {
-            Bitmap art = Utils.decodeSampledBitmapFromResource(
-                    Utils.getByteArrayFrom(requireContext(), play), 400, 400);
-            // Default artwork
-            if (art == null) {
-                art = BitmapFactory.decodeResource(getResources(), R.drawable.music_icon_big);
-            }
-            setArtFromBackgroundThread(play, mArtImageView, mBlurBackground, art);
-        });
+    @Override
+    public void onTrackPause() {
+        playOrPause();
     }
 
-    private void setArtFromBackgroundThread(SongModel play, ImageView image, ImageView background, Bitmap art) {
-        requireActivity().runOnUiThread(() -> {
-            image.setImageBitmap(art);
-            Blurry.with(requireContext())
-                    .from(art)
-                    .into(background);
-
-            redrawPlayPauseButton();
-            createNotification(requireContext(), play);
-        });
+    @Override
+    public void onTrackNext() {
+        next();
     }
-
-    private void playSong(SongModel play, boolean justInitSong) {
-        if (mServiceBound.isBoundValueRaw()) {
-            if (mServiceBound.get_mService().isPlaying()) {
-                mServiceBound.get_mService().stop();
-            }
-
-            if (justInitSong) {
-                mServiceBound.get_mService().playSong(play.get_mSongUri(), false);
-                isPlaying = false;
-            } else {
-                mServiceBound.get_mService().playSong(play.get_mSongUri(), true);
-                isPlaying = true;
-            }
-
-            mSongSeekBar.setProgress(0);
-            mSongSeekBar.setMax(mServiceBound.get_mService().getDuration());
-            endPosition.setText(Utils.convertToMMSS(mServiceBound.get_mService().getDuration() + ""));
-            mServiceBound.get_mService().setCompletionListener(this);
-
-            displayCurrentSong(play);
-        }
-    }
-
-
+    // endregion
 }

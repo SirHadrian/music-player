@@ -13,6 +13,11 @@ import java.util.Random;
 
 public class Utils {
 
+    /**
+     * Song duration conversion from milliseconds in appropriate display time
+     * @param duration - song duration
+     * @return - formatted song duration
+     */
     @SuppressLint("DefaultLocale")
     public static String convertToMMSS(String duration) {
         long durationInMillis = Long.parseLong(duration);
@@ -27,6 +32,13 @@ public class Utils {
         return String.format("%02d:%02d:%02d", hour, minute, second);
     }
 
+    /**
+     * Gets random num to be used as next() song
+     * @param exclude - current playing so to avoid repetition
+     * @param min - bounds of the current playlist
+     * @param max -
+     * @return - the next() index to play
+     */
     public static int getRandomNumberUsingNextInt(int exclude, int min, int max) {
         Random random = new Random();
         int next = random.nextInt(max - min) + min;
@@ -36,6 +48,12 @@ public class Utils {
         return next;
     }
 
+    /**
+     * Load row image data
+     * @param context - application
+     * @param song - current playing
+     * @return - raw bite data
+     */
     public static byte[] getByteArrayFrom(Context context, SongModel song) {
         MediaMetadataRetriever mmr = new MediaMetadataRetriever();
         byte[] rawArt;
@@ -46,6 +64,13 @@ public class Utils {
         return rawArt;
     }
 
+    /**
+     * Calculated the appropriate size for the raw image given the bounds
+     * @param options -
+     * @param reqWidth - imageview bounds
+     * @param reqHeight -
+     * @return - appropriate scale for the image
+     */
     public static int calculateInSampleSize(BitmapFactory.Options options, int reqWidth, int reqHeight) {
         // Raw height and width of image
         final int height = options.outHeight;
@@ -67,6 +92,13 @@ public class Utils {
         return inSampleSize;
     }
 
+    /**
+     * Creates bitmap image from raw data and resize it according with the given constants
+     * @param img - raw byte data
+     * @param reqWidth - ImageView bounds
+     * @param reqHeight -
+     * @return - resized bitmap ready for use
+     */
     public static Bitmap decodeSampledBitmapFromResource(byte[] img, int reqWidth, int reqHeight) {
         if (img == null) {
             return null;

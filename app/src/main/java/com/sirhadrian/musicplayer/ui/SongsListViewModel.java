@@ -7,6 +7,7 @@ import java.lang.ref.WeakReference;
 
 public class SongsListViewModel extends ViewModel {
 
+    // WeakRef the avoid leaks
     private WeakReference<NavController> mNavCtrl;
 
     public NavController get_mNavCtrl() {

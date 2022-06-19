@@ -24,7 +24,7 @@ import androidx.lifecycle.ViewModelProvider;
 
 import com.sirhadrian.musicplayer.databinding.ActivityMainBinding;
 import com.sirhadrian.musicplayer.model.database.SongModel;
-import com.sirhadrian.musicplayer.services.PlaySongs;
+import com.sirhadrian.musicplayer.services.PlaySongsService;
 import com.sirhadrian.musicplayer.ui.SharedDataViewModel;
 import com.sirhadrian.musicplayer.ui.main.MainActivityViewModel;
 import com.sirhadrian.musicplayer.ui.viewpager.ViewPagerFragment;
@@ -33,31 +33,29 @@ import com.sirhadrian.musicplayer.utils.Result;
 
 import java.util.ArrayList;
 
-public class MainActivity extends AppCompatActivity implements ServiceConnection {
-
-    private SharedDataViewModel mSharedData;
-    private MainActivityViewModel mMainData;
-
-    private ActivityResultLauncher<String> mUserPermission;
+public class MainActivity extends AppCompatActivity implements ServiceConnection{
 
     // The activity should own the service
-    // Those values need to survive
-    private PlaySongs mService;
-    private boolean mBound;
+    private PlaySongsService mService;
+    private boolean mBound = false;
+    // ViewModels
+    private SharedDataViewModel mSharedData;
+    private MainActivityViewModel mMainData;
+    // User response
+    private ActivityResultLauncher<String> mUserPermission;
 
-    public static final String bound_key = "BOUND";
-
+    // region Lifecycle Methods
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
+        // Main view binding
         ActivityMainBinding binding = ActivityMainBinding.inflate(getLayoutInflater());
         View root = binding.getRoot();
 
-        Intent intent = new Intent(this, PlaySongs.class);
-        bindService(intent, this, Context.BIND_AUTO_CREATE);
-
         // Shared data between all fragments
         mSharedData = new ViewModelProvider(this).get(SharedDataViewModel.class);
+        mMainData = new ViewModelProvider(this).get(MainActivityViewModel.class);
+
         // Asking user for Read storage permission
         mUserPermission = registerForActivityResult(new ActivityResultContracts.RequestPermission(), result -> {
             Context context = this;
@@ -76,24 +74,80 @@ public class MainActivity extends AppCompatActivity implements ServiceConnection
         });
         mUserPermission.launch(Manifest.permission.WRITE_EXTERNAL_STORAGE);
 
-        // Data persistence for Service
-        mMainData = new ViewModelProvider(this).get(MainActivityViewModel.class);
-
         setContentView(root);
     }
 
     @Override
+    protected void onStart() {
+        super.onStart();
+        Intent intent = new Intent(this, PlaySongsService.class);
+        startService(intent);
+    }
+
+    @Override
+    protected void onResume() {
+        super.onResume();
+        Intent intent = new Intent(this, PlaySongsService.class);
+        bindService(intent, this, Context.BIND_AUTO_CREATE);
+    }
+
+    @Override
+    protected void onStop() {
+        super.onStop();
+        unbindService(this);
+        mBound = false;
+    }
+
+    @Override
+    protected void onDestroy() {
+        super.onDestroy();
+        if (!mMainData.isHasOrientationChanged()) {
+            // kill the service
+            stopService(new Intent(this, PlaySongsService.class));
+        }
+        NotificationManagerCompat.from(this).cancelAll();
+        mMainData.setHasOrientationChanged(false);
+    }
+    // endregion
+
+    // region Implementing Interfaces
+    // Binding to running service
+    @Override
+    public void onServiceConnected(ComponentName className,
+                                   IBinder service) {
+        // We've bound to LocalService, cast the IBinder and get LocalService instance
+        PlaySongsService.PlaySongBinder binder = (PlaySongsService.PlaySongBinder) service;
+        mService = binder.getService();
+        mBound = true;
+    }
+
+    @Override
+    public void onServiceDisconnected(ComponentName arg0) {
+        mBound = false;
+    }
+    // endregion
+
+    // region Interface for accessing activity variables
+    public PlaySongsService get_mService() {
+        return mService;
+    }
+
+    public boolean ismBound() {
+        return mBound;
+    }
+    // endregion
+
+    @Override
     protected void onSaveInstanceState(@NonNull Bundle outState) {
         super.onSaveInstanceState(outState);
-        outState.putBoolean(bound_key, mBound);
     }
 
     @Override
     protected void onRestoreInstanceState(@NonNull Bundle savedInstanceState) {
         super.onRestoreInstanceState(savedInstanceState);
-        mBound = savedInstanceState.getBoolean(bound_key, false);
     }
 
+    // Get read storage permission
     private void respondOnUserPermissionActs(Context context) {
         //user response
         if (ContextCompat.checkSelfPermission(context, Manifest.permission.WRITE_EXTERNAL_STORAGE) == PackageManager.PERMISSION_GRANTED) {
@@ -119,43 +173,6 @@ public class MainActivity extends AppCompatActivity implements ServiceConnection
                 Toast.makeText(context, "Permission denied", Toast.LENGTH_LONG).show();
             }
         }
-    }
-
-    @Override
-    public void onServiceDisconnected(ComponentName arg0) {
-        mBound = false;
-    }
-
-    @Override
-    public void onServiceConnected(ComponentName className,
-                                   IBinder service) {
-        // We've bound to LocalService, cast the IBinder and get LocalService instance
-        PlaySongs.LocalBinder binder = (PlaySongs.LocalBinder) service;
-        mService = binder.getService();
-        mBound = true;
-
-        mMainData.set_BoundValueRaw(true);
-        mMainData.setServiceBound(mService);
-    }
-
-    @Override
-    protected void onResume() {
-        super.onResume();
-        mBound = mMainData.isBoundValueRaw();
-        if (mService == null) {
-            mService = mMainData.get_mService();
-        }
-    }
-
-    @Override
-    protected void onDestroy() {
-        super.onDestroy();
-        if (!mMainData.isHasOrientationChanged()) {
-            mService.release();
-            unbindService(this);
-        }
-        NotificationManagerCompat.from(this).cancelAll();
-        mMainData.setHasOrientationChanged(false);
     }
 
     @Override

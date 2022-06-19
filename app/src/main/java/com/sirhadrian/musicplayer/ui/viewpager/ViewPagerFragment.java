@@ -26,10 +26,11 @@ public class ViewPagerFragment extends Fragment {
 
     private List<Fragment> mViewPagerFragments;
     private FragmentStateAdapter mFragmentStateAdapter;
+    // Static reference so can be used with the static methods
     private static ViewPager2 mFragmentViewPager;
-
+    // Used to get the nav Control in child fragment
     private SongsListViewModel mSongsListVM;
-
+    // For easy app navigation
     private NavController mNavCtrl;
 
     @Nullable
@@ -37,6 +38,7 @@ public class ViewPagerFragment extends Fragment {
     public View onCreateView(@NonNull LayoutInflater inflater, @Nullable ViewGroup container,
                              @Nullable Bundle savedInstanceState) {
 
+        // Inflating PageViewer2
         FragmentViewpagerBinding binding = FragmentViewpagerBinding.inflate(getLayoutInflater());
         View root = binding.getRoot();
 
@@ -58,24 +60,26 @@ public class ViewPagerFragment extends Fragment {
     }
 
     @Override
-    public void onStop() {
-        super.onStop();
-    }
-
-    @Override
     public void onViewCreated(@NonNull View view, @Nullable Bundle savedInstanceState) {
         super.onViewCreated(view, savedInstanceState);
+        // Navigation control can only be found after the view is created
         mNavCtrl = Navigation.findNavController(view);
         mSongsListVM.set_mNavCtrl(mNavCtrl);
     }
 
+    @Override
+    public void onStop() {
+        super.onStop();
+    }
 
+    // User in SongsListFragment to open the detail view on item click
     public static void goToDetail() {
         if (mFragmentViewPager != null) {
             mFragmentViewPager.setCurrentItem(mFragmentViewPager.getCurrentItem() + 1);
         }
     }
 
+    // Used in MainActivity to exit the app or go back to list view
     public static boolean isLastItem() {
         if (mFragmentViewPager.getCurrentItem() == 0) {
             return true;

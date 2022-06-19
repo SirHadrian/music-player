@@ -12,6 +12,7 @@ import androidx.documentfile.provider.DocumentFile;
 import com.sirhadrian.musicplayer.model.database.SongModel;
 
 import java.util.ArrayList;
+import java.util.concurrent.Executor;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 
@@ -20,6 +21,12 @@ public class Query {
     public Query() {
     }
 
+    /**
+     *  Can get all media from document tree type uri
+     * @param context - application
+     * @param folder - selected playlist
+     * @return - songs in playlist NO metadata included
+     */
     public static ArrayList<SongModel> getSongsFromFolder(final Context context, Uri folder) {
         ArrayList<SongModel> songs = new ArrayList<>();
 
@@ -34,6 +41,11 @@ public class Query {
         return songs;
     }
 
+    /**
+     * Get absolute path from the uri
+     * @param path - path to folder
+     * @return - refactored path
+     */
     public static String findFullPath(String path) {
         String actualResult;
         path=path.substring(5);
@@ -59,8 +71,14 @@ public class Query {
         return actualResult;
     }
 
+    /**
+     * Scan for songs in new thread to avoid blocking the main thread
+     * @param context - application
+     * @param folder - playlist to scan
+     * @param callback - supplied from caller elsewhere
+     */
     public static void makeScanRequest(Context context, String folder, ResultCallback<ArrayList<SongModel>> callback) {
-        ExecutorService executor = Executors.newSingleThreadExecutor();
+        Executor executor = Executors.newSingleThreadExecutor();
         executor.execute(() -> {
             try {
                 Result<ArrayList<SongModel>> result = new Result.Success<>(Query.getAllAudioFromDevice(context, folder));
@@ -72,11 +90,15 @@ public class Query {
         });
     }
 
+    /**
+     * Gets all audio media files from the device
+     * @param context - application
+     * @param folderName - folder to scan for media content
+     * @return - playlist with metadata included
+     */
     public static ArrayList<SongModel> getAllAudioFromDevice(final Context context, String folderName) {
         ArrayList<SongModel> songs = new ArrayList<>();
-        //String testFolder = "/storage/44A6-B704/Documents/V_E_M";
-
-
+        // All audio from device
         Uri collection;
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.Q) {
             collection = MediaStore.Audio.Media.getContentUri(MediaStore.VOLUME_EXTERNAL);
@@ -84,6 +106,7 @@ public class Query {
             collection = MediaStore.Audio.Media.EXTERNAL_CONTENT_URI;
         }
 
+        // Metadata
         String[] projection = new String[]{
                 MediaStore.Audio.Media._ID,
                 MediaStore.Audio.Media.TITLE,
@@ -97,6 +120,7 @@ public class Query {
 
         String[] selectionArgs = null;
         if (folderName != null) {
+            // Only gets audio from the selected folder
             selectionArgs = new String[]{String.format("%%%s%%", folderName)};
         }
 
@@ -105,7 +129,7 @@ public class Query {
                 projection,
                 selection,
                 selectionArgs,
-                null
+                null // Order in witch they appear in folder
         )) {
             // Cache column indices.
             int idColumn = cursor.getColumnIndexOrThrow(MediaStore.Audio.Media._ID);
