@@ -42,15 +42,18 @@ import jp.wasabeef.blurry.Blurry;
 
 public class SongsListFragment extends Fragment implements View.OnClickListener {
 
+    // Current playlist
     private List<SongModel> mSongsList;
+    // Keep a  copy of the current playlist to revert to
     private ArrayList<SongModel> mSongsAlwaysFull;
-
+    // ViewModels
     private SharedDataViewModel mSharedData;
     private SongsListViewModel mSongsListVM;
-
+    // Recyclerview
     private SongsAdapter mSongsAdapter;
+    private RecyclerView mRecyclerView;
+    // Cache for bitmaps
     private LruCache<String, Bitmap> memoryCache;
-
     //Bottom view
     private ImageView backgroundImage;
     private ImageView smallIconImage;
@@ -58,21 +61,21 @@ public class SongsListFragment extends Fragment implements View.OnClickListener 
     private TextView artistName;
     private ConstraintLayout rowLayout;
     private TextView mIndexAndTotal;
-
     // FABs
     private FloatingActionButton mMasterSwitch;
     private FloatingActionButton mFabSettings;
     private FloatingActionButton mFabShuffle;
     private FloatingActionButton mFabSearch;
-    private boolean editTextOpen = false;
-    private EditText mSearchBox;
     private boolean isFABOpen;
-    private InputMethodManager imm;
-
+    // Search
     private String mLastFindPattern;
-
+    private EditText mSearchBox;
+    private InputMethodManager imm;
+    private boolean editTextOpen = false;
+    // Navigation
     private NavController mNavCtrl;
 
+    // region Lifecycle Methods
     @SuppressLint("NotifyDataSetChanged")
     @Nullable
     @Override
@@ -102,23 +105,24 @@ public class SongsListFragment extends Fragment implements View.OnClickListener 
         mFabSettings.setOnClickListener(this);
         mFabSearch.setOnClickListener(this);
         mMasterSwitch.setOnClickListener(this);
-
-        RecyclerView mRecyclerView = binding.fragmentSongsListRecyclerView;
+        // Setting recyclerview
+        mRecyclerView = binding.fragmentSongsListRecyclerView;
         mRecyclerView.setLayoutManager(new LinearLayoutManager(requireContext()));
-
         mSongsList = new ArrayList<>();
         mSongsAdapter = new SongsAdapter(mSongsList);
         mRecyclerView.setAdapter(mSongsAdapter);
-
+        // Get playlist form shared data
         mSharedData = new ViewModelProvider(requireActivity()).get(SharedDataViewModel.class);
         mSharedData.get_mSongsList().observe(getViewLifecycleOwner(), songs -> {
             mSongsList.clear();
             mSongsList.addAll(songs);
             mSongsAdapter.notifyDataSetChanged();
         });
+        // Get current playing song and display it at the bottom of the recyclerview
         mSharedData.get_mPlayingNowIndex().observe(getViewLifecycleOwner(),
                 position -> displayPlayingNowIndexAtBottom(position));
 
+        // Get total available memory and create bitmap cache
         final int maxMemory = (int) (Runtime.getRuntime().maxMemory() / 1024);
         // Use 1/8th of the available memory for this memory cache.
         final int cacheSize = maxMemory / 8;
@@ -159,36 +163,47 @@ public class SongsListFragment extends Fragment implements View.OnClickListener 
     }
 
     @Override
+    public void onViewCreated(@NonNull View view, @Nullable Bundle savedInstanceState) {
+        super.onViewCreated(view, savedInstanceState);
+        mNavCtrl = mSongsListVM.get_mNavCtrl();
+    }
+
+    @Override
+    public void onPause() {
+        super.onPause();
+        if (editTextOpen) {
+            closeEditBox();
+        }
+        if (isFABOpen) {
+            closeFABMenu();
+        }
+    }
+    // endregion
+
+    // region Interface Listeners
+    @Override
     public void onClick(View view) {
         int itemId = view.getId();
 
         if (itemId == R.id.bottom_row) {
             ViewPagerFragment.goToDetail();
-        }
-
-        else if (itemId == R.id.fab_shuffle_songs) {
+        } else if (itemId == R.id.fab_shuffle_songs) {
             ArrayList<SongModel> mSongs = mSharedData.get_mSongsList().getValue();
             if (mSongs != null) {
                 Collections.shuffle(mSongs);
                 mSharedData.loadSongs(mSongs);
             }
-        }
-
-        else if (itemId == R.id.fab_settings) {
+        } else if (itemId == R.id.fab_settings) {
             if (mNavCtrl == null) return;
             mNavCtrl.navigate(R.id.action_viewPagerFragment_to_settingsFragment2);
-        }
-
-        else if (itemId == R.id.master_switch) {
+        } else if (itemId == R.id.master_switch) {
             if (!isFABOpen) {
                 showFABMenu();
 
             } else {
                 closeFABMenu();
             }
-        }
-
-        else if (itemId == R.id.fab_search_song) {
+        } else if (itemId == R.id.fab_search_song) {
             if (editTextOpen) {
                 closeEditBox();
             } else {
@@ -203,18 +218,9 @@ public class SongsListFragment extends Fragment implements View.OnClickListener 
             }
         }
     }
+    // endregion
 
-    @Override
-    public void onPause() {
-        super.onPause();
-        if (editTextOpen) {
-            closeEditBox();
-        }
-        if (isFABOpen) {
-            closeFABMenu();
-        }
-    }
-
+    // region Utility Methods
     private void closeEditBox() {
         mSearchBox.setText("");
         mFabSearch.setImageResource(R.drawable.ic_baseline_search_24);
@@ -255,6 +261,10 @@ public class SongsListFragment extends Fragment implements View.OnClickListener 
         mFabSearch.animate().translationY(base * 3);
     }
 
+    /**
+     * Responsible for setting and displaying the bottom row with contains the current playing song
+     * @param position - song index
+     */
     private void displayPlayingNowIndexAtBottom(Integer position) {
         SongModel currentPlaying = mSongsList.get(position);
 
@@ -289,21 +299,20 @@ public class SongsListFragment extends Fragment implements View.OnClickListener 
     public Bitmap getBitmapFromMemCache(String key) {
         return memoryCache.get(key);
     }
+    // endregion
 
-    @Override
-    public void onViewCreated(@NonNull View view, @Nullable Bundle savedInstanceState) {
-        super.onViewCreated(view, savedInstanceState);
-        mNavCtrl = mSongsListVM.get_mNavCtrl();
-    }
-
+    /**
+     * Responsible for creating and displaying items in recyclerview
+     */
     private class SongsAdapter extends RecyclerView.Adapter<SongsAdapter.SongHolder> {
-
+        // Current playlist
         private final List<SongModel> mSongs;
 
         public SongsAdapter(List<SongModel> songs) {
             this.mSongs = songs;
         }
 
+        // Creates and inflates the row layout for recyclerview
         @NonNull
         @Override
         public SongHolder onCreateViewHolder(@NonNull ViewGroup parent, int viewType) {
@@ -312,6 +321,8 @@ public class SongsListFragment extends Fragment implements View.OnClickListener 
             return new SongHolder(view);
         }
 
+        // Supplying data for current item in recyclerview
+        // Should be kept light to ensure smooth scrolling
         @Override
         public void onBindViewHolder(@NonNull SongHolder holder, int position) {
             holder.get_mSongTitle().setText(mSongs.get(position).get_mSongTitle());
@@ -323,6 +334,10 @@ public class SongsListFragment extends Fragment implements View.OnClickListener 
             processBitmapInBackground(holder);
         }
 
+        /**
+         * Background bitmap image processing for current view
+         * @param holder - current view to display
+         */
         private void processBitmapInBackground(SongHolder holder) {
             ExecutorService executor = Executors.newSingleThreadExecutor();
             executor.execute(() -> {
@@ -347,11 +362,7 @@ public class SongsListFragment extends Fragment implements View.OnClickListener 
             });
         }
 
-        @Override
-        public int getItemCount() {
-            return mSongs.size();
-        }
-
+        // Modifying a view object can only be done on the thread that created it
         private void setArtFromBackgroundThread(SongHolder holder, Bitmap art) {
             requireActivity().runOnUiThread(() -> {
                 holder.get_mSmallSongIcon().setImageBitmap(art);
@@ -362,7 +373,14 @@ public class SongsListFragment extends Fragment implements View.OnClickListener 
             });
         }
 
+        @Override
+        public int getItemCount() {
+            return mSongs.size();
+        }
 
+        /**
+         * Supplies the adapter with song items
+         */
         private class SongHolder extends RecyclerView.ViewHolder implements View.OnClickListener {
             private final TextView mSongTitle;
             private final TextView mSongArtistName;
@@ -379,15 +397,18 @@ public class SongsListFragment extends Fragment implements View.OnClickListener 
                 mItemImageBackground = itemView.findViewById(R.id.item_background_image);
                 mSongDuration = itemView.findViewById(R.id.song_duration);
                 ConstraintLayout mRowLayout = itemView.findViewById(R.id.row_constraint);
+                // Represents one row in recyclerview
                 mRowLayout.setOnClickListener(this);
             }
 
+            // When a song in recyclerview is selected
             @Override
             public void onClick(View view) {
                 mSharedData.set_mPlayingNowIndex(get_mSongPosition());
                 ViewPagerFragment.goToDetail();
             }
 
+            // region Getters/Setters
             public TextView get_mSongTitle() {
                 return mSongTitle;
             }
@@ -415,6 +436,7 @@ public class SongsListFragment extends Fragment implements View.OnClickListener 
             public void set_mSongPosition(Integer mSongPosition) {
                 this.mSongPosition = mSongPosition;
             }
+            // endregion
         }
     }
 }

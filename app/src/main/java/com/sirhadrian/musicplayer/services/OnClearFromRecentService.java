@@ -21,6 +21,7 @@ public class OnClearFromRecentService extends Service {
     @Override
     public void onDestroy() {
         super.onDestroy();
+        stopSelf();
     }
 
     @Override

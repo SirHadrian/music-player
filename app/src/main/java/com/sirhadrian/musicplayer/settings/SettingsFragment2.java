@@ -6,6 +6,7 @@ import android.content.Intent;
 import android.net.Uri;
 import android.os.Bundle;
 
+import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
 import androidx.lifecycle.ViewModelProvider;
 import androidx.preference.Preference;
@@ -22,16 +23,17 @@ import java.util.ArrayList;
 public class SettingsFragment2 extends PreferenceFragmentCompat {
 
     private final int mRequestCodeOpenDir = 99919;
-
+    // Pref controls
     private Preference mScanDirectory;
     private Preference mScanButton;
-
+    // Scan results will be saved in here
     private SharedDataViewModel mSharedData;
-
+    // Folder to scan
     private String mFolder;
 
     @Override
     public void onCreatePreferences(Bundle savedInstanceState, String rootKey) {
+        // Inflating preference screen
         setPreferencesFromResource(R.xml.root_preferences, rootKey);
 
         mSharedData = new ViewModelProvider(requireActivity()).get(SharedDataViewModel.class);
@@ -42,13 +44,15 @@ public class SettingsFragment2 extends PreferenceFragmentCompat {
         assert mScanButton != null;
         mScanButton.setEnabled(false);
 
+        // Open document picker and gets uri for the folder
         assert mScanDirectory != null;
         mScanDirectory.setOnPreferenceClickListener(preference -> {
             Intent intent = new Intent(Intent.ACTION_OPEN_DOCUMENT_TREE);
             intent.addCategory(Intent.CATEGORY_DEFAULT);
-            startActivityForResult(Intent.createChooser(intent, "Choose directory"), mRequestCodeOpenDir);
+            SettingsFragment2.this.startActivityForResult(Intent.createChooser(intent, "Choose directory"), mRequestCodeOpenDir);
             return true;
         });
+        // Scan the selected folder for audio content
         assert mScanButton != null;
         mScanButton.setOnPreferenceClickListener(preference -> {
             if (mFolder == null) return false;
@@ -68,19 +72,16 @@ public class SettingsFragment2 extends PreferenceFragmentCompat {
         });
     }
 
+    // Result for the document picker
     @Override
     public void onActivityResult(int requestCode, int resultCode, @Nullable Intent data) {
         if (requestCode == mRequestCodeOpenDir && resultCode == RESULT_OK) {
             assert data != null;
             Uri path = data.getData();
             mScanDirectory.setSummary(path.toString());
+            // Refactor path uri to absolute path
             mFolder = Query.findFullPath(path.getPath());
             mScanButton.setEnabled(true);
         }
-    }
-
-    @Override
-    public void onResume() {
-        super.onResume();
     }
 }

@@ -71,11 +71,11 @@ public class PlaySongsService extends Service {
     public void onDestroy() {
         super.onDestroy();
         // Clean player
-        //this.release();
+        this.release();
 
         // Kill the service
         //stopForeground(true);
-        //stopSelf();
+        stopSelf();
     }
     // endregion
 
