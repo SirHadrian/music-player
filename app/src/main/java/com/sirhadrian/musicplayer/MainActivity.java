@@ -95,10 +95,6 @@ public class MainActivity extends AppCompatActivity implements ServiceConnection
     @Override
     protected void onDestroy() {
         super.onDestroy();
-        // Kill the service
-        NotificationManagerCompat.from(this).cancelAll();
-        stopService(new Intent(getBaseContext(), PlaySongsService.class));
-        stopService(new Intent(getBaseContext(), OnClearFromRecentService.class));
     }
     // endregion
 
@@ -162,6 +158,10 @@ public class MainActivity extends AppCompatActivity implements ServiceConnection
     public void onBackPressed() {
         if (ViewPagerFragment.isLastItem()) {
             super.onBackPressed();
+            // Kill the service
+            NotificationManagerCompat.from(this).cancelAll();
+            stopService(new Intent(getBaseContext(), PlaySongsService.class));
+            stopService(new Intent(getBaseContext(), OnClearFromRecentService.class));
         }
     }
 }

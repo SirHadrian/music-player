@@ -87,7 +87,7 @@ public class SongDetailFragment extends Fragment implements Playable, View.OnCli
     private NotificationCompat.Builder mNotificationBuilder;
     private NotificationManagerCompat mNotifyManager;
     // Notification ID must be unique and can be used to update an existing notification
-    private final int mNotificationID = 3321;
+    private static final int mNotificationID = 3321;
 
     // region Lifecycle methods
     @Nullable
