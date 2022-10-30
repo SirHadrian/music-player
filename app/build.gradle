@@ -30,6 +30,7 @@ android {
         viewBinding true
         dataBinding true
     }
+    namespace 'com.sirhadrian.musicplayer'
 }
 
 dependencies {
