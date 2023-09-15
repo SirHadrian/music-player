@@ -50,6 +50,7 @@ public class MainActivity extends AppCompatActivity implements ServiceConnection
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
+
         ActivityMainBinding binding = ActivityMainBinding.inflate(getLayoutInflater());
         View root = binding.getRoot();
 
